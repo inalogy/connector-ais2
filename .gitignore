@@ -1,0 +1,7 @@
+target/
+/.idea/
+make.bat
+generateCodeFromWSDL.bat
+test.properties
+trust-store.jks
+ais2.*.cer

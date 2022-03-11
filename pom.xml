@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.evolveum.polygon</groupId>
+		<artifactId>connector-parent</artifactId>
+		<version>1.5.0.0</version>
+	</parent>
+
+	<groupId>com.evolveum.polygon.connector</groupId>
+	<artifactId>connector-ais2</artifactId>
+	<version>0.1.0</version>
+	<packaging>jar</packaging>
+
+	<name>AIS2 Connector</name>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Gustáv Pálos</name>
+			<email>gustav.palos@artinsolutions.com</email>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>Europe/Prague</timezone>
+		</developer>
+	</developers>
+
+	<!-- FIXME
+	<scm>
+		<connection>scm:git:https://github.com/Evolveum/connector-osk-saphr.git</connection>
+		<developerConnection>scm:git:https://github.com/Evolveum/connector-osk-saphr.git</developerConnection>
+		<url>https://github.com/Evolveum/connector-osk-saphr</url>
+	</scm> -->
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<connectorPackage>oi.artin.idm.connector.ais2</connectorPackage>
+		<connectorClass>Ais2Connector</connectorClass>
+
+		<framework.compatibilityVersion>1.4</framework.compatibilityVersion>
+		<framework.releaseVersion>1.0</framework.releaseVersion>
+
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+
+		<cxf.version>3.3.1</cxf.version>
+
+		<commons.csv.version>1.4</commons.csv.version>
+
+		<!-- TODO: false if you need also run unit tests -->
+		<maven.test.skip>true</maven.test.skip>
+		
+	</properties>
+	
+	
+	<repositories>
+		<repository>
+			<id>evolveum-nexus-releases</id>
+			<name>Internal Releases</name>
+			<url>https://nexus.evolveum.com/nexus/content/repositories/releases/</url>
+		</repository>
+		<repository>
+			<id>evolveum-nexus-snapshots</id>
+			<name>Internal Releases</name>
+			<url>https://nexus.evolveum.com/nexus/content/repositories/snapshots/</url>
+		</repository>
+		<repository>
+			<id>apache-snapshots</id>
+			<name>Apache Snapshots</name>
+			<url>https://repository.apache.org/snapshots/</url>
+		</repository>
+	</repositories>
+
+	<build>
+
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-codegen-plugin</artifactId>
+				<version>${cxf.version}</version>
+				<executions>
+					<execution>
+						<id>generate-sources</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>wsdl2java</goal>
+						</goals>
+<!--						<configuration>-->
+<!--							<wsdlOptions>-->
+<!--								<wsdlOption>-->
+<!--									<extraargs>-->
+<!--										<extraarg>-all</extraarg>-->
+<!--									</extraargs>-->
+<!--								</wsdlOption>-->
+<!--							</wsdlOptions>-->
+<!--						</configuration>-->
+
+						<configuration>
+							<wsdlOptions>
+								<wsdlOption>
+									<extendedSoapHeaders>true</extendedSoapHeaders>
+									<autoNameResolution>true</autoNameResolution>
+									<wsdl>${basedir}/src/main/resources/wsdl/vratOsoby.wsdl</wsdl>
+									<wsdlLocation>classpath:wsdl/vratOsoby.wsdl</wsdlLocation>
+								</wsdlOption>
+ 							</wsdlOptions>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+		</plugins>
+	</build>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.testng</groupId>
+				<artifactId>testng</artifactId>
+				<version>6.8.8</version>    <!-- required by ConnectionID framework 1.4.2.14 -->
+				<scope>test</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.jetbrains</groupId>
+			<artifactId>annotations</artifactId>
+			<version>21.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-frontend-jaxws</artifactId>
+			<version>${cxf.version}</version>
+			<type>jar</type>
+<!--			<scope>provided</scope>-->
+		</dependency>
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-transports-http-hc</artifactId>
+			<version>${cxf.version}</version>
+<!--			<scope>provided</scope>-->
+
+			<!-- FIXME comment it out for testing... -->
+<!--			<exclusions>-->
+<!--				<exclusion>-->
+<!--					<groupId>org.slf4j</groupId>-->
+<!--					<artifactId>slf4j-api</artifactId>-->
+<!--				</exclusion>-->
+<!--			</exclusions>-->
+		</dependency>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+<!--		<dependency>-->
+<!--			<groupId>com.beust</groupId>-->
+<!--			<artifactId>jcommander</artifactId>-->
+<!--			<version>1.48</version>-->
+<!--		</dependency>-->
+
+	</dependencies>
+
+
+</project>
