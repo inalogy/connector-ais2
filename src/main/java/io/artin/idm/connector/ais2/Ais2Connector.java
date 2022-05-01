@@ -72,10 +72,10 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
 	private static final String RESPONSE_LOG_FILENAME = "ais2-soap-responses.xml";
 
     public static final String OBJECT_CLASS_OSOBA = "osoba";
-    public static final String ATTR_AIS_ID = "AisId";
-    private static final String ATTR_LOGIN = "Login";
-    private static final String ATTR_UOC = "UOC";
-    private static final String ATTR_AKTIVNY_PIK = "PIK";
+    public static final String ATTR_AIS_ID = "aisId";
+    private static final String ATTR_LOGIN = "login";
+    private static final String ATTR_UOC = "uoc";
+    private static final String ATTR_AKTIVNY_PIK = "pik";
 
     private static final String ATTR_DATA = "data";
     private static final String ATTR_MOST_RECENT_ACADEMIC_YEAR = "mostRecentAcademicYear";
@@ -655,7 +655,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
             try {
                 Document document = DOCUMENT_BUILDER_THREAD_LOCAL.get()
                         .parse(new InputSource((new StringReader(xmlDataString))));
-                addAttr(builder, ATTR_DATA, removeUnnecessaryAttributes(document));
+                addAttr(builder, ATTR_DATA, removeUnnecessaryAttributes(document, configuration.isKeepFullXml()));
             } catch (Exception e) {
                 throw new InvalidAttributeValueException("Unknown error while parsing xml file: " + e.getMessage(), e);
             }
@@ -767,15 +767,17 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
     }
 
     /** These attributes are in the "parsed data" anyway, so let's spare the space and remove them from the full version. */
-    public static String removeUnnecessaryAttributes(Document doc)
+    public static String removeUnnecessaryAttributes(Document doc, Boolean keepFullXml)
             throws Exception {
         XPath xPath = XPATH_FACTORY_THREAD_LOCAL.get().newXPath();
 
-        for (String attributeForRemoval : ATTRIBUTES_FOR_REMOVAL) {
-            NodeList nodes = (NodeList) xPath.compile(attributeForRemoval).evaluate(doc, XPathConstants.NODESET);
-            for (int i = nodes.getLength() - 1; i >= 0; i--) {
-                Node node = nodes.item(i);
-                node.getParentNode().removeChild(node);
+        if (!keepFullXml){
+            for (String attributeForRemoval : ATTRIBUTES_FOR_REMOVAL) {
+                NodeList nodes = (NodeList) xPath.compile(attributeForRemoval).evaluate(doc, XPathConstants.NODESET);
+                for (int i = nodes.getLength() - 1; i >= 0; i--) {
+                    Node node = nodes.item(i);
+                    node.getParentNode().removeChild(node);
+                }
             }
         }
 

@@ -61,6 +61,8 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 
 	private Boolean ais2TrustAllCerts = true; // FIXME false
 
+	private Boolean keepFullXml = false;
+
     @ConfigurationProperty(order = 1,
 			displayMessageKey = "vratOsobyUrl.display",
 			groupMessageKey = "basic.group",
@@ -222,6 +224,24 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 	public void setReceiveTimeout(int receiveTimeout) {
 		this.receiveTimeout = receiveTimeout;
 		notifyObservingConnectors();
+	}
+
+	@ConfigurationProperty(order = 14,
+			displayMessageKey = "keepFullXml.display",
+			groupMessageKey = "basic.group",
+			helpMessageKey = "keepFullXml.help",
+			required = true)
+	public Boolean getKeepFullXml() {
+		return keepFullXml;
+	}
+
+	@SuppressWarnings("unused")
+	public void setKeepFullXml(Boolean keepFullXml) {
+		keepFullXml = keepFullXml;
+	}
+
+	public boolean isKeepFullXml() {
+		return Boolean.TRUE.equals(getKeepFullXml());
 	}
 
 	Path getSoapLogTargetPath() {
