@@ -12,7 +12,7 @@
 
 	<groupId>com.evolveum.polygon.connector</groupId>
 	<artifactId>connector-ais2</artifactId>
-	<version>0.2.0</version>
+	<version>0.2.1</version>
 	<packaging>jar</packaging>
 
 	<name>AIS2 Connector</name>
@@ -124,6 +124,14 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>11</source>
+					<target>11</target>
+				</configuration>
 			</plugin>
 
 		</plugins>

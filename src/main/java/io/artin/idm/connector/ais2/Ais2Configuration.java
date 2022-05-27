@@ -192,7 +192,7 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 
 	@SuppressWarnings("unused")
 	public void setAis2TrustAllCerts(Boolean ais2TrustAllCerts) {
-		ais2TrustAllCerts = ais2TrustAllCerts;
+		this.ais2TrustAllCerts = ais2TrustAllCerts;
 	}
 
 	public boolean isAis2TrustAllCerts() {
@@ -237,7 +237,7 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 
 	@SuppressWarnings("unused")
 	public void setKeepFullXml(Boolean keepFullXml) {
-		keepFullXml = keepFullXml;
+		this.keepFullXml = keepFullXml;
 	}
 
 	public boolean isKeepFullXml() {
