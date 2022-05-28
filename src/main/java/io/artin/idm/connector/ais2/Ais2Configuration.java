@@ -184,18 +184,17 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 	@ConfigurationProperty(order = 11,
 			displayMessageKey = "ais2TrustAllCerts.display",
 			groupMessageKey = "basic.group",
-			helpMessageKey = "ais2TrustAllCerts.help",
-			required = true)
+			helpMessageKey = "ais2TrustAllCerts.help")
 	public Boolean getAis2TrustAllCerts() {
 		return ais2TrustAllCerts;
 	}
 
 	@SuppressWarnings("unused")
 	public void setAis2TrustAllCerts(Boolean ais2TrustAllCerts) {
-		ais2TrustAllCerts = ais2TrustAllCerts;
+		this.ais2TrustAllCerts = ais2TrustAllCerts;
 	}
 
-	public boolean isAis2TrustAllCerts() {
+	public boolean ais2TrustAllCerts() {
 		return Boolean.TRUE.equals(getAis2TrustAllCerts());
 	}
 
@@ -229,18 +228,17 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 	@ConfigurationProperty(order = 14,
 			displayMessageKey = "keepFullXml.display",
 			groupMessageKey = "basic.group",
-			helpMessageKey = "keepFullXml.help",
-			required = true)
+			helpMessageKey = "keepFullXml.help")
 	public Boolean getKeepFullXml() {
 		return keepFullXml;
 	}
 
 	@SuppressWarnings("unused")
 	public void setKeepFullXml(Boolean keepFullXml) {
-		keepFullXml = keepFullXml;
+		this.keepFullXml = keepFullXml;
 	}
 
-	public boolean isKeepFullXml() {
+	public boolean keepFullXml() {
 		return Boolean.TRUE.equals(getKeepFullXml());
 	}
 
@@ -336,11 +334,11 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 	}
 
 	public String getSslDisableCnCheck()  {
-		return isAis2TrustAllCerts() ? Boolean.TRUE.toString() : null;
+		return ais2TrustAllCerts() ? Boolean.TRUE.toString() : null;
 	}
 
 	public String getSslTrustManager()  {
-		return isAis2TrustAllCerts() ? "NonValidatingTM" : null;
+		return ais2TrustAllCerts() ? "NonValidatingTM" : null;
 	}
 
 	protected boolean tamperSsl() {

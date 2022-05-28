@@ -655,7 +655,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
             try {
                 Document document = DOCUMENT_BUILDER_THREAD_LOCAL.get()
                         .parse(new InputSource((new StringReader(xmlDataString))));
-                addAttr(builder, ATTR_DATA, removeUnnecessaryAttributes(document, configuration.isKeepFullXml()));
+                addAttr(builder, ATTR_DATA, removeUnnecessaryAttributes(document, configuration.keepFullXml()));
             } catch (Exception e) {
                 throw new InvalidAttributeValueException("Unknown error while parsing xml file: " + e.getMessage(), e);
             }
