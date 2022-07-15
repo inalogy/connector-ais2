@@ -83,6 +83,18 @@ public class Ais2ConnectorTest {
 		if (properties.containsKey("ais2TrustAllCerts")) {
 			configuration.setAis2TrustAllCerts(Boolean.parseBoolean(properties.getProperty("ais2TrustAllCerts")));
 		}
+
+		if (properties.containsKey("keepFullXml")) {
+			configuration.setKeepFullXml(Boolean.parseBoolean(properties.getProperty("keepFullXml")));
+		}
+
+		if (properties.containsKey("enableNastavOsobInfo")) {
+			configuration.setEnableNastavOsobInfo(Boolean.parseBoolean(properties.getProperty("enableNastavOsobInfo")));
+		}
+
+		if (properties.containsKey("ais2TrustAllCerts")) {
+			configuration.setEnableUlozZamestnanca(Boolean.parseBoolean(properties.getProperty("enableUlozZamestnanca")));
+		}
  	}
 
 	@BeforeMethod

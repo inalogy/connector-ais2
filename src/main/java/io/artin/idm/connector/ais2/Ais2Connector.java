@@ -78,6 +78,11 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
     private static final String ATTR_AKTIVNY_PIK = "pik";
 
     private static final String ATTR_DATA = "data";
+
+    private static final String ATTR_ULOZ_ZAMESTNANCA = "ulozZamestnanca";
+
+    private static final String ATTR_NASTAV_OSOB_INFO = "nastavOsobInfo";
+
     private static final String ATTR_MOST_RECENT_ACADEMIC_YEAR = "mostRecentAcademicYear";
 
     private static final String ATTR_MENO = "meno";
@@ -118,7 +123,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
     private static final String ATTR_PB_PSC = "pbPsc";
     private static final String ATTR_PB_STAT = "pbStat";
 
-    private static final List<String> ATTRIBUTES_FOR_REMOVAL = Arrays.asList(
+    private static final List<String> ATTRIBUTES_FOR_REMOVAL_VRAT_OSOBY = Arrays.asList(
             "/vratOsobyResponse/id",
             "/vratOsobyResponse/meno",
             "/vratOsobyResponse/priezvisko",
@@ -146,6 +151,54 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
             "/vratOsobyResponse/pouzivatel/login",
             "/vratOsobyResponse/pouzivatel/initPasswd",
             "/vratOsobyResponse/sklonovanieNar");
+
+    private static final List<String> ATTRIBUTES_FOR_REMOVAL_ULOZ_ZAMESTNANCA = Arrays.asList(
+            "/vratOsobyResponse/id",
+            "/vratOsobyResponse/email",
+            "/vratOsobyResponse/emailPrivate",
+            "/vratOsobyResponse/liveID",
+            "/vratOsobyResponse/urlFotky",
+            "/vratOsobyResponse/telefon",
+            "/vratOsobyResponse/idCRS",
+            "/vratOsobyResponse/kodObecNarodCRS",
+            "/vratOsobyResponse/kodStatNarodCRS",
+            "/vratOsobyResponse/statNarod",
+            "/vratOsobyResponse/pouzivatel",
+            "/vratOsobyResponse/typySuhlasu",
+            "/vratOsobyResponse/studium",
+            "/vratOsobyResponse/prihlaskaUch",
+            "/vratOsobyResponse/adresaOsoby");
+
+    private static final List<String> ATTRIBUTES_FOR_REMOVAL_NASTAV_OSOB_INFO = Arrays.asList(
+            "/vratOsobyResponse/meno",
+            "/vratOsobyResponse/priezvisko",
+            "/vratOsobyResponse/povPriezvisko",
+            "/vratOsobyResponse/plneMeno",
+            "/vratOsobyResponse/cop",
+            "/vratOsobyResponse/cisloPasu",
+            "/vratOsobyResponse/rodneCislo",
+            "/vratOsobyResponse/datumNarodenia",
+            "/vratOsobyResponse/telefon",
+            "/vratOsobyResponse/kodNarodnost",
+            "/vratOsobyResponse/kodPohlavie",
+            "/vratOsobyResponse/kodRodinnyStav",
+            "/vratOsobyResponse/kodStat",
+            "/vratOsobyResponse/skratkaAkademickyTitul",
+            "/vratOsobyResponse/skratkaCestnyTitul",
+            "/vratOsobyResponse/skratkaHodnost",
+            "/vratOsobyResponse/skratkaVedPegHodnost",
+            "/vratOsobyResponse/skratkaVedeckaHodnost",
+            "/vratOsobyResponse/kodTypVzdelania",
+            "/vratOsobyResponse/idCRS",
+            "/vratOsobyResponse/kodObecNarodCRS",
+            "/vratOsobyResponse/kodStatNarodCRS",
+            "/vratOsobyResponse/statNarod",
+            "/vratOsobyResponse/adresaOsoby",
+            "/vratOsobyResponse/sklonovanieNar",
+            "/vratOsobyResponse/typySuhlasu",
+            "/vratOsobyResponse/studium",
+            "/vratOsobyResponse/prihlaskaUch",
+            "/vratOsobyResponse/zamestnanec");
 
     private static final ThreadLocal<DocumentBuilder> DOCUMENT_BUILDER_THREAD_LOCAL;
     private static final ThreadLocal<XPathFactory> XPATH_FACTORY_THREAD_LOCAL;
@@ -476,6 +529,17 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
                         .setUpdateable(false)
                         .build());
 
+        //read+write
+        objClassBuilder.addAttributeInfo(
+                new AttributeInfoBuilder(ATTR_ULOZ_ZAMESTNANCA)
+                        .setUpdateable(true)
+                        .build());
+
+        objClassBuilder.addAttributeInfo(
+                new AttributeInfoBuilder(ATTR_NASTAV_OSOB_INFO)
+                        .setUpdateable(true)
+                        .build());
+
         schemaBuilder.defineOperationOption(OperationOptionInfoBuilder.buildPageSize(), SearchOp.class);
 
         schemaBuilder.defineObjectClass(objClassBuilder.build());
@@ -655,7 +719,17 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
             try {
                 Document document = DOCUMENT_BUILDER_THREAD_LOCAL.get()
                         .parse(new InputSource((new StringReader(xmlDataString))));
-                addAttr(builder, ATTR_DATA, removeUnnecessaryAttributes(document, configuration.keepFullXml()));
+                addAttr(builder, ATTR_DATA, removeUnnecessaryAttributes(document, configuration.keepFullXml(), ATTRIBUTES_FOR_REMOVAL_VRAT_OSOBY));
+                if (configuration.enableUlozZamestnanca()) {
+                    Document doc = DOCUMENT_BUILDER_THREAD_LOCAL.get()
+                            .parse(new InputSource((new StringReader(xmlDataString))));
+                    addAttr(builder, ATTR_ULOZ_ZAMESTNANCA, removeUnnecessaryAttributes(doc, false, ATTRIBUTES_FOR_REMOVAL_ULOZ_ZAMESTNANCA));
+                }
+                if (configuration.enableNastavOsobInfo()) {
+                    Document doc = DOCUMENT_BUILDER_THREAD_LOCAL.get()
+                            .parse(new InputSource((new StringReader(xmlDataString))));
+                    addAttr(builder, ATTR_NASTAV_OSOB_INFO, removeUnnecessaryAttributes(doc, false, ATTRIBUTES_FOR_REMOVAL_NASTAV_OSOB_INFO));
+                }
             } catch (Exception e) {
                 throw new InvalidAttributeValueException("Unknown error while parsing xml file: " + e.getMessage(), e);
             }
@@ -767,12 +841,12 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
     }
 
     /** These attributes are in the "parsed data" anyway, so let's spare the space and remove them from the full version. */
-    public static String removeUnnecessaryAttributes(Document doc, Boolean keepFullXml)
+    public static String removeUnnecessaryAttributes(Document doc, Boolean keepFullXml, List<String> attributesForRemoval)
             throws Exception {
         XPath xPath = XPATH_FACTORY_THREAD_LOCAL.get().newXPath();
 
         if (!keepFullXml){
-            for (String attributeForRemoval : ATTRIBUTES_FOR_REMOVAL) {
+            for (String attributeForRemoval : attributesForRemoval) {
                 NodeList nodes = (NodeList) xPath.compile(attributeForRemoval).evaluate(doc, XPathConstants.NODESET);
                 for (int i = nodes.getLength() - 1; i >= 0; i--) {
                     Node node = nodes.item(i);

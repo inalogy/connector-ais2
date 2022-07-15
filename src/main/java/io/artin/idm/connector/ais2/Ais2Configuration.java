@@ -63,6 +63,10 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 
 	private Boolean keepFullXml = false;
 
+	private Boolean enableNastavOsobInfo = false;
+
+	private Boolean enableUlozZamestnanca = false;
+
     @ConfigurationProperty(order = 1,
 			displayMessageKey = "vratOsobyUrl.display",
 			groupMessageKey = "basic.group",
@@ -240,6 +244,40 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 
 	public boolean keepFullXml() {
 		return Boolean.TRUE.equals(getKeepFullXml());
+	}
+
+	@ConfigurationProperty(order = 15,
+			displayMessageKey = "enableNastavOsobInfo.display",
+			groupMessageKey = "basic.group",
+			helpMessageKey = "enableNastavOsobInfo.help")
+	public Boolean getEnableNastavOsobInfo() {
+		return enableNastavOsobInfo;
+	}
+
+	@SuppressWarnings("unused")
+	public void setEnableNastavOsobInfo(Boolean enableNastavOsobInfo) {
+		this.enableNastavOsobInfo = enableNastavOsobInfo;
+	}
+
+	public boolean enableNastavOsobInfo() {
+		return Boolean.TRUE.equals(getEnableNastavOsobInfo());
+	}
+
+	@ConfigurationProperty(order = 16,
+			displayMessageKey = "enableUlozZamestnanca.display",
+			groupMessageKey = "basic.group",
+			helpMessageKey = "enableUlozZamestnanca.help")
+	public Boolean getEnableUlozZamestnanca() {
+		return enableUlozZamestnanca;
+	}
+
+	@SuppressWarnings("unused")
+	public void setEnableUlozZamestnanca(Boolean enableUlozZamestnanca) {
+		this.enableUlozZamestnanca = enableUlozZamestnanca;
+	}
+
+	public boolean enableUlozZamestnanca() {
+		return Boolean.TRUE.equals(getEnableUlozZamestnanca());
 	}
 
 	Path getSoapLogTargetPath() {

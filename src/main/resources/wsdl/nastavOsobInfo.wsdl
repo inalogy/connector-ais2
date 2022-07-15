@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch0="http://ais/uk/typy" xmlns:sch1="http://ais/uk" xmlns:sch2="http://ais/nastavOsobInfo/typy" xmlns:sch3="http://ais/nastavOsobInfo" xmlns:sch4="http://ais/uk/resptypy" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://ais/nastavOsobInfo" targetNamespace="http://ais/nastavOsobInfo">
+    <wsdl:types xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://ais/uk/typy" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ais/uk/typy">
+            <xs:simpleType name="connection" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:annotation xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:documentation xmlns:xs="http://www.w3.org/2001/XMLSchema">Identifikator transakcie</xs:documentation>
+                </xs:annotation>
+                <xs:restriction base="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+            </xs:simpleType>
+            <xs:complexType name="mapIntDec" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:int" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element name="value" type="xs:decimal" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="mapIntStr" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:int" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element name="value" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="mapStrDate" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element minOccurs="0" name="value" nillable="true" type="xs:date" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="mapStrDec" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element name="value" type="xs:decimal" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="mapStrInt" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element minOccurs="0" name="value" nillable="true" type="xs:int" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="mapStrStr" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element name="value" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="mapStrLong" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element minOccurs="0" name="value" nillable="true" type="xs:long" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="mapLongDec" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:long" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element name="value" type="xs:decimal" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="mapLongStr" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="key" type="xs:long" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element name="value" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:schema>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typy="http://ais/uk" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ais/uk">
+            <xs:element name="AISFault" type="typy:AISFault" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+            <xs:complexType name="AISFault" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:element name="Code" type="xs:int" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    <xs:element name="Message" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:schema>
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:typy="http://ais/nastavOsobInfo/typy" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ais/nastavOsobInfo/typy">
+            <xsd:complexType name="LZOsoba" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:all xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="id" type="xsd:int" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Id osoby v AiS2</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="identifKartaTyp" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                                <xsd:element maxOccurs="unbounded" minOccurs="0" name="LZIdentifKartaTyp" type="typy:LZIdentifKartaTyp" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="identifKarta" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                                <xsd:element maxOccurs="unbounded" minOccurs="0" name="LZIdentifKarta" type="typy:LZIdentifKarta" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="pouzivatel" type="typy:SPPouzivatel" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="spravaImEx" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Správa o spracovaní/nespracovaní dát pre osobu</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="liveID" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Identifikátor pre Micosoft</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="email" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Pridelený email univerzitou</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="emailPrivate" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Súkromný email osoby</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="urlFotky" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Url k fotografii uloženej v AiS2</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="LZIdentifKartaTyp" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:all xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="typCislaKarty" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="LZIdentifKarta" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:all xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="cisloKarty" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Číslo karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="kodTypIDCisla" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Kód typ identifikačného čísla</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="kodValidacia" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Kód stavu karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="kodVizual" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Kód vyobrazenia karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="licencie" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                                <xsd:element maxOccurs="unbounded" minOccurs="0" name="LZLicencie" type="typy:LZLicencie" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="platnostDo" nillable="true" type="xsd:date" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Platnost karty do</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="platnostOd" type="xsd:date" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Platnost karty od</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="prefix" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Prefix čísla karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="sufix" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Sufix čísla karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="LZLicencie" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:all xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element minOccurs="0" name="cislo" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Číslo licencie</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="id" nillable="true" type="xsd:int" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Id licencie z AiS2</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="kodTypLicencie" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Kód typu licencie</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="platnostDo" type="xsd:date" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Platnosť licencie do</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="platnostOd" type="xsd:date" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Platnost licencie od</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="SPPouzivatel" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:all xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="initPasswd" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="login" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Login používateľa</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:element name="LZOsoba" type="typy:LZOsoba" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+            <xsd:complexType name="LZOsobaList" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="LZOsoba" type="typy:LZOsoba" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:element name="LZOsobaList" type="typy:LZOsobaList" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+        </xsd:schema>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://ais/nastavOsobInfo" xmlns:importTypy="http://ais/uk/resptypy" xmlns:typy="http://ais/nastavOsobInfo/typy" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ais/nastavOsobInfo">
+            <xs:import namespace="http://ais/nastavOsobInfo/typy" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+            <xs:import namespace="http://ais/uk/resptypy" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+            <xs:element name="nastavOsobInfoRequest" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                        <xs:element maxOccurs="unbounded" name="osoby" type="typy:LZOsoba" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="nastavOsobInfoResponse" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                        <xs:element maxOccurs="unbounded" name="osoby" type="importTypy:LZOsoba" xmlns:xs="http://www.w3.org/2001/XMLSchema"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:importTyp="http://ais/uk" xmlns:typy="http://ais/uk/resptypy" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ais/uk/resptypy">
+            <xsd:import namespace="http://ais/uk" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+            <xsd:complexType name="LZOsoba" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:all xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="id" type="xsd:int" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Id oaoby AiS2</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="identifKarta" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Zoznam kariet zaevidovaných v AiS2</xsd:documentation>
+                        </xsd:annotation>
+                        <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                                <xsd:element maxOccurs="unbounded" minOccurs="0" name="LZIdentifKarta" type="typy:LZIdentifKarta" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="spravaImEx" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Správa o spracovaní/nespracovaní dát pre osobu</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="status" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                                <xsd:element name="AISFault" type="importTyp:AISFault" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="LZIdentifKarta" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:all xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="cisloKarty" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Číslo karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="kodTypIDCisla" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Kód typu čísla/karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="prefix" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Prefix čísla karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="sufix" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Sufix čísla karty</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:element name="LZOsoba" type="typy:LZOsoba" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+            <xsd:complexType name="LZOsobaList" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="LZOsoba" type="typy:LZOsoba" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:element name="LZOsobaList" type="typy:LZOsobaList" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+        </xsd:schema>
+    </wsdl:types>
+    <wsdl:message name="nastavOsobInfoResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:nastavOsobInfoResponse" name="nastavOsobInfoResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="nastavOsobInfoRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:nastavOsobInfoRequest" name="nastavOsobInfoRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"></wsdl:part>
+    </wsdl:message>
+    <wsdl:portType name="nastavOsobInfo" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:operation name="nastavOsobInfo" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <wsdl:input message="tns:nastavOsobInfoRequest" name="nastavOsobInfoRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"></wsdl:input>
+            <wsdl:output message="tns:nastavOsobInfoResponse" name="nastavOsobInfoResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"></wsdl:output>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="nastavOsobInfoSoap11" type="tns:nastavOsobInfo" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+        <wsdl:operation name="nastavOsobInfo" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <soap:operation soapAction="ais2.uniba.sk/nastavOsobInfo" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            <wsdl:input name="nastavOsobInfoRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:input>
+            <wsdl:output name="nastavOsobInfoResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="nastavOsobInfoService" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:port binding="tns:nastavOsobInfoSoap11" name="nastavOsobInfoSoap11" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <soap:address location="https://ais2.uniba.sk:443/ais/ws/UK/nastavOsobInfo" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>
