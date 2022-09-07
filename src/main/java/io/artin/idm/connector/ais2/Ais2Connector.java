@@ -52,9 +52,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Optional.ofNullable;
@@ -752,9 +750,18 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
     }
 
     private String getAktivnyPik(LZOsoba.IdentifKarta identifKarta) {
+        String aktivovana = getPikPodlaKoduValidacie(identifKarta, Set.of("0", "1", "2", "3"));
+        if (aktivovana != null) {
+            return aktivovana;
+        }
+
+        return getPikPodlaKoduValidacie(identifKarta, Set.of("A")); // aktivna
+    }
+
+    private static String getPikPodlaKoduValidacie(LZOsoba.IdentifKarta identifKarta, Collection<String> kody) {
         if (identifKarta != null && identifKarta.getLZIdentifKarta() != null) {
             for (LZIdentifKarta identifKart : identifKarta.getLZIdentifKarta()){
-                if ("PIK".equals(identifKart.getKodTypIDCisla()) && "A".equals(identifKart.getKodValidacia()))
+                if ("PIK".equals(identifKart.getKodTypIDCisla()) && kody.contains(identifKart.getKodValidacia()))
                     return identifKart.getCisloKarty();
             }
         }
