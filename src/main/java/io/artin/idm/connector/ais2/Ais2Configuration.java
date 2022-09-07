@@ -63,6 +63,10 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 
 	private Boolean keepFullXml = false;
 
+	private Boolean enableNastavOsobInfo = false;
+
+	private Boolean enableUlozZamestnanca = false;
+
     @ConfigurationProperty(order = 1,
 			displayMessageKey = "vratOsobyUrl.display",
 			groupMessageKey = "basic.group",
@@ -184,8 +188,7 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 	@ConfigurationProperty(order = 11,
 			displayMessageKey = "ais2TrustAllCerts.display",
 			groupMessageKey = "basic.group",
-			helpMessageKey = "ais2TrustAllCerts.help",
-			required = true)
+			helpMessageKey = "ais2TrustAllCerts.help")
 	public Boolean getAis2TrustAllCerts() {
 		return ais2TrustAllCerts;
 	}
@@ -195,7 +198,7 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 		this.ais2TrustAllCerts = ais2TrustAllCerts;
 	}
 
-	public boolean isAis2TrustAllCerts() {
+	public boolean ais2TrustAllCerts() {
 		return Boolean.TRUE.equals(getAis2TrustAllCerts());
 	}
 
@@ -229,8 +232,7 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 	@ConfigurationProperty(order = 14,
 			displayMessageKey = "keepFullXml.display",
 			groupMessageKey = "basic.group",
-			helpMessageKey = "keepFullXml.help",
-			required = true)
+			helpMessageKey = "keepFullXml.help")
 	public Boolean getKeepFullXml() {
 		return keepFullXml;
 	}
@@ -240,8 +242,42 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 		this.keepFullXml = keepFullXml;
 	}
 
-	public boolean isKeepFullXml() {
+	public boolean keepFullXml() {
 		return Boolean.TRUE.equals(getKeepFullXml());
+	}
+
+	@ConfigurationProperty(order = 15,
+			displayMessageKey = "enableNastavOsobInfo.display",
+			groupMessageKey = "basic.group",
+			helpMessageKey = "enableNastavOsobInfo.help")
+	public Boolean getEnableNastavOsobInfo() {
+		return enableNastavOsobInfo;
+	}
+
+	@SuppressWarnings("unused")
+	public void setEnableNastavOsobInfo(Boolean enableNastavOsobInfo) {
+		this.enableNastavOsobInfo = enableNastavOsobInfo;
+	}
+
+	public boolean enableNastavOsobInfo() {
+		return Boolean.TRUE.equals(getEnableNastavOsobInfo());
+	}
+
+	@ConfigurationProperty(order = 16,
+			displayMessageKey = "enableUlozZamestnanca.display",
+			groupMessageKey = "basic.group",
+			helpMessageKey = "enableUlozZamestnanca.help")
+	public Boolean getEnableUlozZamestnanca() {
+		return enableUlozZamestnanca;
+	}
+
+	@SuppressWarnings("unused")
+	public void setEnableUlozZamestnanca(Boolean enableUlozZamestnanca) {
+		this.enableUlozZamestnanca = enableUlozZamestnanca;
+	}
+
+	public boolean enableUlozZamestnanca() {
+		return Boolean.TRUE.equals(getEnableUlozZamestnanca());
 	}
 
 	Path getSoapLogTargetPath() {
@@ -336,11 +372,11 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 	}
 
 	public String getSslDisableCnCheck()  {
-		return isAis2TrustAllCerts() ? Boolean.TRUE.toString() : null;
+		return ais2TrustAllCerts() ? Boolean.TRUE.toString() : null;
 	}
 
 	public String getSslTrustManager()  {
-		return isAis2TrustAllCerts() ? "NonValidatingTM" : null;
+		return ais2TrustAllCerts() ? "NonValidatingTM" : null;
 	}
 
 	protected boolean tamperSsl() {
