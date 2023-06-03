@@ -1,4 +1,4 @@
-package io.artin.idm.connector.ais2;
+package com.inalogy.midpoint.connector.ais2;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -133,7 +133,7 @@ public class Ais2ConnectorTest {
 		};
 
 		Ais2Filter sf = new Ais2Filter();
-		sf.byId = "1023736"; //GP
+		sf.byId = "1099303"; //""1023736"; //GP
 
 		LOG.ok("start finding");
 		connector.executeQuery(objectClass, sf, rh, null);

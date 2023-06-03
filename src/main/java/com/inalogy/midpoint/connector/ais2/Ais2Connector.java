@@ -1,4 +1,4 @@
-package io.artin.idm.connector.ais2;
+package com.inalogy.midpoint.connector.ais2;
 
 import ais.vratosoby.VratOsoby;
 import ais.vratosoby.VratOsobyRequest;
@@ -778,8 +778,8 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
                 addAttr(builder, ATTR_TB_ULICA, adresaOsoby.getUlica());
                 addAttr(builder, ATTR_TB_ORIENTACNE_CISLO, adresaOsoby.getOrientacneCislo());
 
-                if (adresaOsoby.getKodStat() == null || "703".equals(adresaOsoby.getKodStat())) {
-                    if (adresaOsoby.getObec() == null || adresaOsoby.getObec().getPopis() == null)
+                if (isEmpty(adresaOsoby.getKodStat()) || "703".equals(adresaOsoby.getKodStat())) {
+                    if (adresaOsoby.getObec() == null || isEmpty(adresaOsoby.getObec().getPopis()))
                         addAttr(builder, ATTR_TB_OBEC, adresaOsoby.getPosta());
                     else
                         addAttr(builder, ATTR_TB_OBEC, adresaOsoby.getObec().getPopis());
@@ -789,7 +789,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
                     addAttr(builder, ATTR_TB_OBEC, adresaOsoby.getPosta());
                 }
 
-                if (adresaOsoby.getPSC() == null && adresaOsoby.getObec() != null)
+                if (isEmpty(adresaOsoby.getPSC()) && adresaOsoby.getObec() != null)
                     addAttr(builder, ATTR_TB_PSC, adresaOsoby.getObec().getPsc());
                 else
                     addAttr(builder, ATTR_TB_PSC, adresaOsoby.getPSC());
@@ -800,8 +800,8 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
                 addAttr(builder, ATTR_PB_ULICA, adresaOsoby.getUlica());
                 addAttr(builder, ATTR_PB_ORIENTACNE_CISLO, adresaOsoby.getOrientacneCislo());
 
-                if (adresaOsoby.getKodStat() == null || "703".equals(adresaOsoby.getKodStat())) {
-                    if (adresaOsoby.getObec() == null || adresaOsoby.getObec().getPopis() == null)
+                if (isEmpty(adresaOsoby.getKodStat()) || "703".equals(adresaOsoby.getKodStat())) {
+                    if (adresaOsoby.getObec() == null || isEmpty(adresaOsoby.getObec().getPopis()))
                         addAttr(builder, ATTR_PB_OBEC, adresaOsoby.getPosta());
                     else
                         addAttr(builder, ATTR_PB_OBEC, adresaOsoby.getObec().getPopis());
@@ -811,7 +811,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
                     addAttr(builder, ATTR_PB_OBEC, adresaOsoby.getPosta());
                 }
 
-                if (adresaOsoby.getPSC() == null && adresaOsoby.getObec() != null)
+                if (isEmpty(adresaOsoby.getPSC()) && adresaOsoby.getObec() != null)
                     addAttr(builder, ATTR_PB_PSC, adresaOsoby.getObec().getPsc());
                 else
                     addAttr(builder, ATTR_PB_PSC, adresaOsoby.getPSC());
@@ -958,6 +958,13 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         http.setClient(httpClientPolicy);
 
         return result;
+    }
+
+    private boolean isEmpty(String str){
+        if(str == null || str.trim().isEmpty()) {
+            return true;
+        }
+        return false;
     }
 
 }

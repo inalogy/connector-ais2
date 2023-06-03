@@ -1,12 +1,10 @@
-package io.artin.idm.connector.ais2;
+package com.inalogy.midpoint.connector.ais2;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.*;
-
-import static io.artin.idm.connector.ais2.Ais2Connector.ATTR_AIS_ID;
 
 /**
  * Ais Filter Translator.
@@ -35,7 +33,7 @@ public class AisFilterTranslator extends AbstractFilterTranslator<Ais2Filter> {
         }
 
         LOG.ok("attr.getName: {0}, attr.getValue: {1}, Uid.NAME: {2}, Name.NAME: {3}", attr.getName(), attr.getValue(), Uid.NAME, Name.NAME);
-        if (Uid.NAME.equals(attr.getName()) || ATTR_AIS_ID.equals(attr.getName())) {
+        if (Uid.NAME.equals(attr.getName()) || Ais2Connector.ATTR_AIS_ID.equals(attr.getName())) {
             if (attr.getValue() != null && attr.getValue().get(0) != null) {
                 Ais2Filter sf = new Ais2Filter();
                 sf.byId = String.valueOf(attr.getValue().get(0));
@@ -57,7 +55,7 @@ public class AisFilterTranslator extends AbstractFilterTranslator<Ais2Filter> {
 
         Attribute attr = filter.getAttribute();
         LOG.ok("attr.getName: {0}, attr.getValue: {1}, Uid.NAME: {2}, Name.NAME: {3}", attr.getName(), attr.getValue(), Uid.NAME, Name.NAME);
-        if (Uid.NAME.equals(attr.getName()) || ATTR_AIS_ID.equals(attr.getName())) {
+        if (Uid.NAME.equals(attr.getName()) || Ais2Connector.ATTR_AIS_ID.equals(attr.getName())) {
             if (attr.getValue() != null && attr.getValue().get(0) != null) {
                 Ais2Filter sf = new Ais2Filter();
                 sf.byInterval = new Interval(Integer.parseInt(String.valueOf(attr.getValue().get(0))) + 1, null);
@@ -79,7 +77,7 @@ public class AisFilterTranslator extends AbstractFilterTranslator<Ais2Filter> {
 
         Attribute attr = filter.getAttribute();
         LOG.ok("attr.getName: {0}, attr.getValue: {1}, Uid.NAME: {2}, Name.NAME: {3}", attr.getName(), attr.getValue(), Uid.NAME, Name.NAME);
-        if (Uid.NAME.equals(attr.getName()) || ATTR_AIS_ID.equals(attr.getName())) {
+        if (Uid.NAME.equals(attr.getName()) || Ais2Connector.ATTR_AIS_ID.equals(attr.getName())) {
             if (attr.getValue() != null && attr.getValue().get(0) != null) {
                 Ais2Filter sf = new Ais2Filter();
                 sf.byInterval = new Interval(Integer.parseInt(String.valueOf(attr.getValue().get(0))), null);
@@ -101,7 +99,7 @@ public class AisFilterTranslator extends AbstractFilterTranslator<Ais2Filter> {
 
         Attribute attr = filter.getAttribute();
         LOG.ok("attr.getName: {0}, attr.getValue: {1}, Uid.NAME: {2}, Name.NAME: {3}", attr.getName(), attr.getValue(), Uid.NAME, Name.NAME);
-        if (Uid.NAME.equals(attr.getName()) || ATTR_AIS_ID.equals(attr.getName())) {
+        if (Uid.NAME.equals(attr.getName()) || Ais2Connector.ATTR_AIS_ID.equals(attr.getName())) {
             if (attr.getValue() != null && attr.getValue().get(0) != null) {
                 Ais2Filter sf = new Ais2Filter();
                 sf.byInterval = new Interval(null, Integer.parseInt(String.valueOf(attr.getValue().get(0))) - 1);
@@ -123,7 +121,7 @@ public class AisFilterTranslator extends AbstractFilterTranslator<Ais2Filter> {
 
         Attribute attr = filter.getAttribute();
         LOG.ok("attr.getName: {0}, attr.getValue: {1}, Uid.NAME: {2}, Name.NAME: {3}", attr.getName(), attr.getValue(), Uid.NAME, Name.NAME);
-        if (Uid.NAME.equals(attr.getName()) || ATTR_AIS_ID.equals(attr.getName())) {
+        if (Uid.NAME.equals(attr.getName()) || Ais2Connector.ATTR_AIS_ID.equals(attr.getName())) {
             if (attr.getValue() != null && attr.getValue().get(0) != null) {
                 Ais2Filter sf = new Ais2Filter();
                 sf.byInterval = new Interval(null, Integer.parseInt(String.valueOf(attr.getValue().get(0))));

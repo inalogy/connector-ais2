@@ -12,7 +12,7 @@
 
 	<groupId>com.evolveum.polygon.connector</groupId>
 	<artifactId>connector-ais2</artifactId>
-	<version>0.3.1</version>
+	<version>1.0.0</version>
 	<packaging>jar</packaging>
 
 	<name>AIS2 Connector</name>
@@ -27,7 +27,7 @@
 	<developers>
 		<developer>
 			<name>Gustáv Pálos</name>
-			<email>gustav.palos@artinsolutions.com</email>
+			<email>gustav.palos@inalogy.com</email>
 			<roles>
 				<role>developer</role>
 			</roles>
@@ -45,7 +45,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<connectorPackage>oi.artin.idm.connector.ais2</connectorPackage>
+		<connectorPackage>com.inalogy.midpoint.connector.ais2</connectorPackage>
 		<connectorClass>Ais2Connector</connectorClass>
 
 		<framework.compatibilityVersion>1.4</framework.compatibilityVersion>

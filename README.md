@@ -14,7 +14,7 @@ Generate WS classes:
 
 ```mvn cxf-codegen:wsdl2java -X -f pom.xml```
 
-[Download](https://git.artin.io/idm/connector-ais2) and build the project:
+[Download](https://github.com/inalogy/connector-ais2) and build the project:
 Build without tests: 
 
 ```mvn clean install```
@@ -38,4 +38,5 @@ For test purposes is also possible to set property midpointTrustAllCerts=true.
 Licensed under the [Apache License 2.0](/LICENSE).
 
 ## Status
-AIS2 Connector is a POC version. Tested with MidPoint version 4.4.1. The connector is supported by Artin Solutions. If you need support, please contact idm@artinsolutions.com.
+[AIS2](https://www.ais2.sk) Connector is intended for production use. Tested with MidPoint version 4.7. The connector was introduced as a contribution to midPoint project by [Inalogy](https://www.inalogy.com) and is not officially supported by Evolveum.
+If you need support, please contact info@inalogy.com.

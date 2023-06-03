@@ -1,4 +1,4 @@
-package io.artin.idm.connector.ais2;
+package com.inalogy.midpoint.connector.ais2;
 
 public class Ais2Filter {
 

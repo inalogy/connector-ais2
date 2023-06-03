@@ -1,4 +1,4 @@
-package io.artin.idm.connector.ais2;
+package com.inalogy.midpoint.connector.ais2;
 
 import java.io.File;
 import java.net.MalformedURLException;
