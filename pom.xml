@@ -12,7 +12,7 @@
 
 	<groupId>com.evolveum.polygon.connector</groupId>
 	<artifactId>connector-ais2</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<packaging>jar</packaging>
 
 	<name>AIS2 Connector</name>
