@@ -4,14 +4,19 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -45,6 +50,7 @@ public class Ais2ConnectorTest {
 			System.setProperty("javax.net.ssl.trustStore", properties.getProperty("trustStore"));
 		if (properties.containsKey("trustStorePassword"))
 			System.setProperty("javax.net.ssl.trustStorePassword", properties.getProperty("trustStorePassword"));
+
 	}
 
 	@BeforeClass
@@ -92,7 +98,7 @@ public class Ais2ConnectorTest {
 			configuration.setEnableNastavOsobInfo(Boolean.parseBoolean(properties.getProperty("enableNastavOsobInfo")));
 		}
 
-		if (properties.containsKey("ais2TrustAllCerts")) {
+		if (properties.containsKey("enableUlozZamestnanca")) {
 			configuration.setEnableUlozZamestnanca(Boolean.parseBoolean(properties.getProperty("enableUlozZamestnanca")));
 		}
  	}
@@ -133,7 +139,7 @@ public class Ais2ConnectorTest {
 		};
 
 		Ais2Filter sf = new Ais2Filter();
-		sf.byId = "1099303"; //""1023736"; //GP
+		sf.byId = "1441085"; //""1023736"; //GP
 
 		LOG.ok("start finding");
 		connector.executeQuery(objectClass, sf, rh, null);
@@ -195,5 +201,51 @@ public class Ais2ConnectorTest {
 		LOG.ok("start finding all");
 		connector.executeQuery(objectClass, null, rh, null);
 		LOG.ok("end finding");
+	}
+
+	@Test
+	public void testCreateUser() {
+		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
+
+		ResultsHandler rh = new ResultsHandler() {
+			@Override
+			public boolean handle(ConnectorObject connectorObject) {
+				System.out.println(connectorObject);
+				return true;
+			}
+		};
+
+		Set<Attribute> attributes = new HashSet<>();
+		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue("test").build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_LOGIN).addValue("test").build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue("9999").build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue("test").build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("user").build());
+
+
+		LOG.ok("start creating");
+		connector.create(objectClass, attributes, null);
+		LOG.ok("end creating");
+	}
+
+	@Test
+	public void testUpdateUser() {
+		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
+
+		ResultsHandler rh = new ResultsHandler() {
+			@Override
+			public boolean handle(ConnectorObject connectorObject) {
+				System.out.println(connectorObject);
+				return true;
+			}
+		};
+
+		Set<Attribute> attributes = new HashSet<>();
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue("test3").build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("User").build());
+
+		LOG.ok("start updating");
+		connector.update(objectClass, new Uid("1441091"), attributes, null);
+		LOG.ok("end updating");
 	}
 }

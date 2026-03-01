@@ -1,5 +1,10 @@
 package com.inalogy.midpoint.connector.ais2;
 
+import ais.nastavosobinfo.NastavOsobInfo;
+import ais.nastavosobinfo.NastavOsobInfoRequest;
+import ais.ulozzamestnanca.UlozZamestnanca;
+import ais.ulozzamestnanca.UlozZamestnancaRequest;
+import ais.ulozzamestnanca.UlozZamestnancaResponse;
 import ais.vratosoby.VratOsoby;
 import ais.vratosoby.VratOsobyRequest;
 import ais.vratosoby.VratOsobyResponse;
@@ -16,20 +21,19 @@ import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
+import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
-import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.SearchOp;
-import org.identityconnectors.framework.spi.operations.TestOp;
+import org.identityconnectors.framework.spi.operations.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -61,7 +65,7 @@ import static java.util.Optional.ofNullable;
  * AIS2 Connector.
  */
 @ConnectorClass(displayNameKey = "ais2.connector.display", configurationClass = Ais2Configuration.class)
-public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, SearchOp<Ais2Filter> {
+public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, SearchOp<Ais2Filter>, CreateOp, UpdateOp {
 
     private static final Log LOG = Log.getLog(Ais2Connector.class);
 
@@ -71,8 +75,8 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
 
     public static final String OBJECT_CLASS_OSOBA = "osoba";
     public static final String ATTR_AIS_ID = "aisId";
-    private static final String ATTR_LOGIN = "login";
-    private static final String ATTR_UOC = "uoc";
+    protected static final String ATTR_LOGIN = "login";
+    protected static final String ATTR_UOC = "uoc";
     private static final String ATTR_AKTIVNY_PIK = "pik";
 
     private static final String ATTR_DATA = "data";
@@ -83,8 +87,8 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
 
     private static final String ATTR_MOST_RECENT_ACADEMIC_YEAR = "mostRecentAcademicYear";
 
-    private static final String ATTR_MENO = "meno";
-    private static final String ATTR_PRIEZVISKO = "priezvisko";
+    protected static final String ATTR_MENO = "meno";
+    protected static final String ATTR_PRIEZVISKO = "priezvisko";
     private static final String ATTR_POV_PRIEZVISKO = "povPriezvisko";
     private static final String ATTR_PLNE_MENO = "plneMeno";
     private static final String ATTR_COP = "cop";
@@ -220,6 +224,9 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
 
     private VratOsoby vratOsobyService;
 
+    private UlozZamestnanca ulozZamestnancaService;
+
+    private NastavOsobInfo nastavOsobInfoService;
     /**
      * flag indicating that the configuration has changed since the last
      * call of test()
@@ -248,6 +255,15 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         closeWsClient(vratOsobyService);
         vratOsobyService = null;
 
+        if (configuration.enableUlozZamestnanca()) {
+            closeWsClient(ulozZamestnancaService);
+            ulozZamestnancaService = null;
+        }
+        if (configuration.enableNastavOsobInfo()) {
+            closeWsClient(nastavOsobInfoService);
+            nastavOsobInfoService = null;
+        }
+
 		configuration.removeObservingConnector(this);
         configuration = null;
     }
@@ -264,11 +280,21 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         LOG.info("The connector is being re-initialized.");
         closeWsClient(vratOsobyService);
 
+        if (configuration.enableUlozZamestnanca())
+            closeWsClient(ulozZamestnancaService);
+        if (configuration.enableNastavOsobInfo())
+            closeWsClient(nastavOsobInfoService);
+
+
         initByConfiguration();
     }
 
     private void initByConfiguration() {
         vratOsobyService = createService(VratOsoby.class);
+        if (configuration.enableUlozZamestnanca())
+            ulozZamestnancaService = createService(UlozZamestnanca.class);
+        if (configuration.enableNastavOsobInfo())
+            nastavOsobInfoService = createService(NastavOsobInfo.class);
     }
 
 	@Override
@@ -965,6 +991,170 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
             return true;
         }
         return false;
+    }
+
+    private String getStringAttribute(Set<Attribute> attributes, String name) {
+        LOG.info("ENTRY: getStringAttribute() - Input name: {0}, attributes count: {1}",
+                name, attributes != null ? attributes.size() : 0);
+        for (Attribute attr : attributes) {
+            if (attr.getName().equals(name)) {
+                List<Object> values = attr.getValue();
+                if (values != null && !values.isEmpty()) {
+                    String result = values.get(0).toString();
+                    LOG.info("EXIT: getStringAttribute() - Found value for {0}: {1}", name, result);
+                    return result;
+                }
+            }
+        }
+        LOG.info("EXIT: getStringAttribute() - No value found for {0}, returning null", name);
+        return null;
+    }
+
+    private JAXBElement getUlozZamestnancaJAXBElement(Set<Attribute> attributes, String elementName, Class classs) {
+        String value = getStringAttribute(attributes, elementName);
+        if (value == null)
+            return null;
+
+        return new JAXBElement<String>(
+                new QName("http://ais/ulozZamestnanca/typy", elementName),
+                classs,
+                value
+        );
+    }
+
+    private JAXBElement getUlozZamestnancaJAXBElement(Set<Attribute> attributes, String elementName) {
+        return getUlozZamestnancaJAXBElement(attributes, elementName, String.class);
+    }
+
+    @Override
+    public Uid create(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
+        LOG.info("ENTRY: create() - Input objectClass: {0}, attributes count: {1}, options: {2}",
+                objectClass, attributes != null ? attributes.size() : 0, options);
+
+        String login = getStringAttribute(attributes, Name.NAME); // toto ulozZamestnanca nevie ulozit, nechame na updateOp/nastavOsobInfo
+        String uoc = getStringAttribute(attributes, ATTR_UOC);
+        String pohlavie = getStringAttribute(attributes, ATTR_KOD_POHLAVIE);
+        if (isEmpty(pohlavie))
+            pohlavie = "N"; // Nedefinovane, ciselnikovy atribut, povinny
+
+        // FIXME LZZamestnanec to fill, nastavOsobInfo?
+
+        if (isEmpty(uoc)){
+            throw new InvalidAttributeValueException("UOC is mandatory in Create operation");
+        }
+
+        ais.ulozzamestnanca.typy.LZIdentifKarta lzIdentifKarta = new ais.ulozzamestnanca.typy.LZIdentifKarta();
+        lzIdentifKarta.setCisloKarty(uoc);
+
+        ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta identifKarta = new ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta();
+        identifKarta.setLZIdentifKarta(lzIdentifKarta);
+
+        ais.ulozzamestnanca.typy.LZOsoba osoba = new ais.ulozzamestnanca.typy.LZOsoba();
+        osoba.setIdentifKarta(identifKarta);
+        osoba.setKodPohlavie(pohlavie);
+        osoba.setMeno(getStringAttribute(attributes, ATTR_MENO));
+        osoba.setPriezvisko(getStringAttribute(attributes, ATTR_PRIEZVISKO));
+        osoba.setCop(getUlozZamestnancaJAXBElement(attributes, ATTR_COP));
+        osoba.setCisloPasu(getUlozZamestnancaJAXBElement(attributes, ATTR_CISLO_PASU));
+        osoba.setRodneCislo(getUlozZamestnancaJAXBElement(attributes, ATTR_RODNE_CISLO));
+        osoba.setDatumNarodenia(getUlozZamestnancaJAXBElement(attributes, ATTR_DATUM_NARODENIA, XMLGregorianCalendar.class));
+        osoba.setKodNarodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_NARODNOST));
+        osoba.setKodRodinnyStav(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_RODINNY_STAV));
+        osoba.setKodStat(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_STAT));
+        osoba.setSkratkaAkademickyTitul(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_AKADEMICKY_TITUL));
+        osoba.setSkratkaCestnyTitul(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_CESTNY_TITUL));
+        osoba.setSkratkaHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_HODNOST));
+        osoba.setSkratkaVedPegHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_VED_PEG_HODNOST));
+        osoba.setSkratkaVedeckaHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_VEDECKA_HODNOST));
+        osoba.setKodTypVzdelania(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_TYP_VZDELANIA));
+
+        UlozZamestnancaRequest ulozZamestnancaRequest = new UlozZamestnancaRequest();
+        ulozZamestnancaRequest.getOsoby().add(osoba);
+
+        UlozZamestnancaResponse ulozZamestnancaResponse = ulozZamestnancaService.ulozZamestnanca(ulozZamestnancaRequest);
+        ais.uk.resptypy.LZOsoba osobaResponse = ulozZamestnancaResponse.getOsoby().get(0);
+
+        if (osobaResponse.getStatus().getAISFault().getCode()==0) {
+            LOG.info("ENTRY: create() - Returning Uid: {0}", osobaResponse.getId());
+            return new Uid(""+osobaResponse.getId());
+        }
+        else {
+            LOG.error("ENTRY: create() - Error in response code: {0}, message: {1}",
+                    osobaResponse.getStatus().getAISFault().getCode(), osobaResponse.getStatus().getAISFault().getMessage());
+            throw new ConnectorException("Exception when creating account for: "+uoc+", code: "
+                    +osobaResponse.getStatus().getAISFault().getCode()+", message: "+osobaResponse.getStatus().getAISFault().getMessage());
+        }
+    }
+
+    @Override
+    public Uid update(ObjectClass objectClass, Uid uid, Set<Attribute> attributes, OperationOptions options) {
+        LOG.info("ENTRY: update() - Input objectClass: {0}, uid: {1}, attributes count: {2}, options: {3}",
+                objectClass, uid, attributes != null ? attributes.size() : 0, options);
+
+        String login = getStringAttribute(attributes, Name.NAME);
+        String uoc = getStringAttribute(attributes, ATTR_UOC);
+        String pohlavie = getStringAttribute(attributes, ATTR_KOD_POHLAVIE);
+        if (isEmpty(pohlavie))
+            pohlavie = "N"; // Nedefinovane, ciselnikovy atribut, povinny
+
+        // FIXME LZZamestnanec to fill, nastavOsobInfo?
+
+        if (uid==null){
+            throw new InvalidAttributeValueException("UID / AIS ID is mandatory in Update operation");
+        }
+
+        if (isEmpty(uoc)){
+            Integer uidValue = Integer.valueOf(uid.getUidValue());
+            VratOsobyRequest vratOsobyRequest = createVratOsobyRequest(uidValue, uidValue);
+
+            VratOsobyResponse vratOsobyResponse = vratOsobyService.vratOsoby(vratOsobyRequest);
+            uoc = getUoc(vratOsobyResponse.getOsoby().get(0).getIdentifKarta());
+            LOG.warn("UOC is empty also over vratOsoby");
+            if (isEmpty(uoc))
+                throw new InvalidAttributeValueException("UOC is mandatory in Update operation");
+        }
+
+        ais.ulozzamestnanca.typy.LZIdentifKarta lzIdentifKarta = new ais.ulozzamestnanca.typy.LZIdentifKarta();
+        lzIdentifKarta.setCisloKarty(uoc);
+
+        ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta identifKarta = new ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta();
+        identifKarta.setLZIdentifKarta(lzIdentifKarta);
+
+        ais.ulozzamestnanca.typy.LZOsoba osoba = new ais.ulozzamestnanca.typy.LZOsoba();
+        osoba.setIdentifKarta(identifKarta);
+        osoba.setKodPohlavie(pohlavie);
+        osoba.setMeno(getStringAttribute(attributes, ATTR_MENO));
+        osoba.setPriezvisko(getStringAttribute(attributes, ATTR_PRIEZVISKO));
+        osoba.setCop(getUlozZamestnancaJAXBElement(attributes, ATTR_COP));
+        osoba.setCisloPasu(getUlozZamestnancaJAXBElement(attributes, ATTR_CISLO_PASU));
+        osoba.setRodneCislo(getUlozZamestnancaJAXBElement(attributes, ATTR_RODNE_CISLO));
+        osoba.setDatumNarodenia(getUlozZamestnancaJAXBElement(attributes, ATTR_DATUM_NARODENIA, XMLGregorianCalendar.class));
+        osoba.setKodNarodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_NARODNOST));
+        osoba.setKodRodinnyStav(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_RODINNY_STAV));
+        osoba.setKodStat(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_STAT));
+        osoba.setSkratkaAkademickyTitul(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_AKADEMICKY_TITUL));
+        osoba.setSkratkaCestnyTitul(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_CESTNY_TITUL));
+        osoba.setSkratkaHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_HODNOST));
+        osoba.setSkratkaVedPegHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_VED_PEG_HODNOST));
+        osoba.setSkratkaVedeckaHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_VEDECKA_HODNOST));
+        osoba.setKodTypVzdelania(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_TYP_VZDELANIA));
+
+        UlozZamestnancaRequest ulozZamestnancaRequest = new UlozZamestnancaRequest();
+        ulozZamestnancaRequest.getOsoby().add(osoba);
+
+        UlozZamestnancaResponse ulozZamestnancaResponse = ulozZamestnancaService.ulozZamestnanca(ulozZamestnancaRequest);
+        ais.uk.resptypy.LZOsoba osobaResponse = ulozZamestnancaResponse.getOsoby().get(0);
+
+        if (osobaResponse.getStatus().getAISFault().getCode()==0) {
+            LOG.info("ENTRY: updated", osobaResponse.getId());
+            return new Uid(""+osobaResponse.getId());
+        }
+        else {
+            LOG.error("ENTRY: update() - Error in response code: {0}, message: {1}",
+                    osobaResponse.getStatus().getAISFault().getCode(), osobaResponse.getStatus().getAISFault().getMessage());
+            throw new ConnectorException("Exception when updating account for: "+uid+", code: "
+                    +osobaResponse.getStatus().getAISFault().getCode()+", message: "+osobaResponse.getStatus().getAISFault().getMessage());
+        }
     }
 
 }

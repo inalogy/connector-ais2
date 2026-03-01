@@ -13,6 +13,8 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.WeakHashMap;
 
+import ais.nastavosobinfo.NastavOsobInfo;
+import ais.ulozzamestnanca.UlozZamestnanca;
 import ais.vratosoby.VratOsoby;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -364,7 +366,7 @@ public class Ais2Configuration extends AbstractConfiguration implements Stateful
 	}
 
 	public String getWsUrl(@SuppressWarnings("rawtypes") Class seiClass) {
-    	if (VratOsoby.class.equals(seiClass)) {
+    	if (VratOsoby.class.equals(seiClass) || UlozZamestnanca.class.equals(seiClass) || NastavOsobInfo.class.equals(seiClass)) {
 			return vratOsobyUrl;
 		}
 
