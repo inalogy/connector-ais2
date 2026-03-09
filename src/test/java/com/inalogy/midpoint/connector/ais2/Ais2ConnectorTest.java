@@ -23,6 +23,7 @@ import static org.testng.Assert.fail;
 public class Ais2ConnectorTest {
 
 	private static final Log LOG = Log.getLog(Ais2ConnectorTest.class);
+	private static final String ATTRIBUTE_DELIMITER = ";";
 
 	private Ais2Configuration configuration;
 
@@ -74,13 +75,8 @@ public class Ais2ConnectorTest {
 			configuration.setReceiveTimeout(Integer.parseInt(properties.getProperty("receiveTimeout")));
 		}
 
-		if (properties.containsKey("filterOdId")) {
-			configuration.setFilterOdId(Integer.parseInt(properties.getProperty("filterOdId")));
-		}
-
-		if (properties.containsKey("filterDoId")) {
-			configuration.setFilterDoId(Integer.parseInt(properties.getProperty("filterDoId")));
-		}
+		configuration.setFilterOdId(Integer.parseInt(properties.getProperty("filterOdId", "1023736")));
+		configuration.setFilterDoId(Integer.parseInt(properties.getProperty("filterDoId", "1023800")));
 
 		if (properties.containsKey("pageSize")) {
 			configuration.setPageSize(Integer.parseInt(properties.getProperty("pageSize")));
@@ -94,13 +90,8 @@ public class Ais2ConnectorTest {
 			configuration.setKeepFullXml(Boolean.parseBoolean(properties.getProperty("keepFullXml")));
 		}
 
-		if (properties.containsKey("enableNastavOsobInfo")) {
-			configuration.setEnableNastavOsobInfo(Boolean.parseBoolean(properties.getProperty("enableNastavOsobInfo")));
-		}
-
-		if (properties.containsKey("enableUlozZamestnanca")) {
-			configuration.setEnableUlozZamestnanca(Boolean.parseBoolean(properties.getProperty("enableUlozZamestnanca")));
-		}
+		configuration.setEnableNastavOsobInfo(Boolean.parseBoolean(properties.getProperty("enableNastavOsobInfo", "true")));
+		configuration.setEnableUlozZamestnanca(Boolean.parseBoolean(properties.getProperty("enableUlozZamestnanca", "true")));
  	}
 
 	@BeforeMethod
@@ -206,6 +197,7 @@ public class Ais2ConnectorTest {
 	@Test
 	public void testCreateUser() {
 		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
+		String login = "test15";
 
 		ResultsHandler rh = new ResultsHandler() {
 			@Override
@@ -216,12 +208,11 @@ public class Ais2ConnectorTest {
 		};
 
 		Set<Attribute> attributes = new HashSet<>();
-		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue("test").build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_LOGIN).addValue("test").build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue("9999").build());
+		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue("10000").build());
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue("test").build());
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("user").build());
-
+		addWriteAttributes(attributes, "10000", login);
 
 		LOG.ok("start creating");
 		connector.create(objectClass, attributes, null);
@@ -231,6 +222,8 @@ public class Ais2ConnectorTest {
 	@Test
 	public void testUpdateUser() {
 		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
+		String uidValue = "1441091";
+		String login = "test1773055314577";
 
 		ResultsHandler rh = new ResultsHandler() {
 			@Override
@@ -241,11 +234,31 @@ public class Ais2ConnectorTest {
 		};
 
 		Set<Attribute> attributes = new HashSet<>();
+		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue("9999").build());
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue("test3").build());
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("User").build());
+		addWriteAttributes(attributes, "9999", login);
 
 		LOG.ok("start updating");
-		connector.update(objectClass, new Uid("1441091"), attributes, null);
+		connector.update(objectClass, new Uid(uidValue), attributes, null);
 		LOG.ok("end updating");
+	}
+
+	private void addWriteAttributes(Set<Attribute> attributes, String uoc, String login) {
+		String delimiter = ATTRIBUTE_DELIMITER;
+		attributes.add(new AttributeBuilder().setName("LZZamestnanec")
+				.addValue(String.join(delimiter, "2026-01-12", "", "27", "4", "10110450", "LF.Dek", "0.50", "0901000001"))
+				.addValue(String.join(delimiter, "2026-02-01", "", "27", "4", "10110451", "LF.Dek", "0.25", "0901000002"))
+				.build());
+		attributes.add(new AttributeBuilder().setName("LZIdentifKarta")
+				.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "2026-01-01", "", ""))
+				.addValue(String.join(delimiter, "49095043", "PIK", "", "", "", "2026-01-01", "", ""))
+				.build());
+		attributes.add(new AttributeBuilder().setName("initPasswd").addValue("3899fda10b0a9b19ce3ceebc1924b175a1ebb000").build());
+		attributes.add(new AttributeBuilder().setName("liveID").addValue(login + ".live.id").build());
+		attributes.add(new AttributeBuilder().setName("email").addValue(login + "@example.com").build());
+		attributes.add(new AttributeBuilder().setName("emailPrivate").addValue(login + ".private@example.com").build());
+		attributes.add(new AttributeBuilder().setName("urlFotky").addValue("https://example.com/photo/" + login + ".jpg").build());
 	}
 }

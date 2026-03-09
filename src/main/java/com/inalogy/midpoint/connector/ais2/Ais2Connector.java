@@ -2,6 +2,7 @@ package com.inalogy.midpoint.connector.ais2;
 
 import ais.nastavosobinfo.NastavOsobInfo;
 import ais.nastavosobinfo.NastavOsobInfoRequest;
+import ais.nastavosobinfo.NastavOsobInfoResponse;
 import ais.ulozzamestnanca.UlozZamestnanca;
 import ais.ulozzamestnanca.UlozZamestnancaRequest;
 import ais.ulozzamestnanca.UlozZamestnancaResponse;
@@ -1026,6 +1027,19 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         return getUlozZamestnancaJAXBElement(attributes, elementName, String.class);
     }
 
+    private JAXBElement<XMLGregorianCalendar> getUlozZamestnancaJAXBElementDate(Set<Attribute> attributes, String elementName) {
+        String value = getStringAttribute(attributes, elementName);
+        if (value == null) {
+            return null;
+        }
+
+        return Ais2WriteSupport.createElement(
+                Ais2WriteSupport.ULOZ_NAMESPACE,
+                elementName,
+                XMLGregorianCalendar.class,
+                Ais2WriteSupport.parseXmlDate(value));
+    }
+
     @Override
     public Uid create(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
         LOG.info("ENTRY: create() - Input objectClass: {0}, attributes count: {1}, options: {2}",
@@ -1037,14 +1051,17 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         if (isEmpty(pohlavie))
             pohlavie = "N"; // Nedefinovane, ciselnikovy atribut, povinny
 
-        // FIXME LZZamestnanec to fill, nastavOsobInfo?
+        if (!configuration.enableUlozZamestnanca()) {
+            throw new ConnectorException("Create operation requires enableUlozZamestnanca=true");
+        }
+
+        ais.ulozzamestnanca.typy.LZIdentifKarta lzIdentifKarta = Ais2WriteSupport.createEmploymentIdentifKarta(attributes, uoc);
+        ais.ulozzamestnanca.typy.LZOsoba.Zamestnanec zamestnanec = Ais2WriteSupport.createZamestnanec(attributes);
+        uoc = lzIdentifKarta.getCisloKarty();
 
         if (isEmpty(uoc)){
             throw new InvalidAttributeValueException("UOC is mandatory in Create operation");
         }
-
-        ais.ulozzamestnanca.typy.LZIdentifKarta lzIdentifKarta = new ais.ulozzamestnanca.typy.LZIdentifKarta();
-        lzIdentifKarta.setCisloKarty(uoc);
 
         ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta identifKarta = new ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta();
         identifKarta.setLZIdentifKarta(lzIdentifKarta);
@@ -1057,7 +1074,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         osoba.setCop(getUlozZamestnancaJAXBElement(attributes, ATTR_COP));
         osoba.setCisloPasu(getUlozZamestnancaJAXBElement(attributes, ATTR_CISLO_PASU));
         osoba.setRodneCislo(getUlozZamestnancaJAXBElement(attributes, ATTR_RODNE_CISLO));
-        osoba.setDatumNarodenia(getUlozZamestnancaJAXBElement(attributes, ATTR_DATUM_NARODENIA, XMLGregorianCalendar.class));
+        osoba.setDatumNarodenia(getUlozZamestnancaJAXBElementDate(attributes, ATTR_DATUM_NARODENIA));
         osoba.setKodNarodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_NARODNOST));
         osoba.setKodRodinnyStav(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_RODINNY_STAV));
         osoba.setKodStat(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_STAT));
@@ -1067,14 +1084,28 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         osoba.setSkratkaVedPegHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_VED_PEG_HODNOST));
         osoba.setSkratkaVedeckaHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_VEDECKA_HODNOST));
         osoba.setKodTypVzdelania(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_TYP_VZDELANIA));
+        osoba.setZamestnanec(zamestnanec);
 
         UlozZamestnancaRequest ulozZamestnancaRequest = new UlozZamestnancaRequest();
         ulozZamestnancaRequest.getOsoby().add(osoba);
 
         UlozZamestnancaResponse ulozZamestnancaResponse = ulozZamestnancaService.ulozZamestnanca(ulozZamestnancaRequest);
         ais.uk.resptypy.LZOsoba osobaResponse = ulozZamestnancaResponse.getOsoby().get(0);
-
         if (osobaResponse.getStatus().getAISFault().getCode()==0) {
+            if (configuration.enableNastavOsobInfo()) {
+                NastavOsobInfoRequest nastavOsobInfoRequest = Ais2WriteSupport.createNastavOsobInfoRequest(attributes, osobaResponse.getId(), login, uoc);
+                if (nastavOsobInfoRequest == null) {
+                    LOG.info("ENTRY: create() - nastavOsobInfo skipped, no write-side data");
+                } else {
+                    NastavOsobInfoResponse nastavOsobInfoResponse = nastavOsobInfoService.nastavOsobInfo(nastavOsobInfoRequest);
+                    ais.uk.resptypy.LZOsoba nastavResponse = nastavOsobInfoResponse.getOsoby().get(0);
+                    if (nastavResponse.getStatus().getAISFault().getCode() != 0) {
+                        throw new ConnectorException("Exception when updating nastavOsobInfo for: " + uoc + ", code: "
+                                + nastavResponse.getStatus().getAISFault().getCode() + ", message: "
+                                + nastavResponse.getStatus().getAISFault().getMessage());
+                    }
+                }
+            }
             LOG.info("ENTRY: create() - Returning Uid: {0}", osobaResponse.getId());
             return new Uid(""+osobaResponse.getId());
         }
@@ -1097,7 +1128,12 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         if (isEmpty(pohlavie))
             pohlavie = "N"; // Nedefinovane, ciselnikovy atribut, povinny
 
-        // FIXME LZZamestnanec to fill, nastavOsobInfo?
+        if (!configuration.enableUlozZamestnanca()) {
+            throw new ConnectorException("Update operation requires enableUlozZamestnanca=true");
+        }
+        ais.ulozzamestnanca.typy.LZIdentifKarta lzIdentifKarta = Ais2WriteSupport.createEmploymentIdentifKarta(attributes, uoc);
+        ais.ulozzamestnanca.typy.LZOsoba.Zamestnanec zamestnanec = Ais2WriteSupport.createZamestnanec(attributes);
+        uoc = lzIdentifKarta.getCisloKarty();
 
         if (uid==null){
             throw new InvalidAttributeValueException("UID / AIS ID is mandatory in Update operation");
@@ -1114,7 +1150,6 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
                 throw new InvalidAttributeValueException("UOC is mandatory in Update operation");
         }
 
-        ais.ulozzamestnanca.typy.LZIdentifKarta lzIdentifKarta = new ais.ulozzamestnanca.typy.LZIdentifKarta();
         lzIdentifKarta.setCisloKarty(uoc);
 
         ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta identifKarta = new ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta();
@@ -1128,7 +1163,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         osoba.setCop(getUlozZamestnancaJAXBElement(attributes, ATTR_COP));
         osoba.setCisloPasu(getUlozZamestnancaJAXBElement(attributes, ATTR_CISLO_PASU));
         osoba.setRodneCislo(getUlozZamestnancaJAXBElement(attributes, ATTR_RODNE_CISLO));
-        osoba.setDatumNarodenia(getUlozZamestnancaJAXBElement(attributes, ATTR_DATUM_NARODENIA, XMLGregorianCalendar.class));
+        osoba.setDatumNarodenia(getUlozZamestnancaJAXBElementDate(attributes, ATTR_DATUM_NARODENIA));
         osoba.setKodNarodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_NARODNOST));
         osoba.setKodRodinnyStav(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_RODINNY_STAV));
         osoba.setKodStat(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_STAT));
@@ -1138,6 +1173,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         osoba.setSkratkaVedPegHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_VED_PEG_HODNOST));
         osoba.setSkratkaVedeckaHodnost(getUlozZamestnancaJAXBElement(attributes, ATTR_SKRATKA_VEDECKA_HODNOST));
         osoba.setKodTypVzdelania(getUlozZamestnancaJAXBElement(attributes, ATTR_KOD_TYP_VZDELANIA));
+        osoba.setZamestnanec(zamestnanec);
 
         UlozZamestnancaRequest ulozZamestnancaRequest = new UlozZamestnancaRequest();
         ulozZamestnancaRequest.getOsoby().add(osoba);
@@ -1146,6 +1182,20 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         ais.uk.resptypy.LZOsoba osobaResponse = ulozZamestnancaResponse.getOsoby().get(0);
 
         if (osobaResponse.getStatus().getAISFault().getCode()==0) {
+            if (configuration.enableNastavOsobInfo()) {
+                NastavOsobInfoRequest nastavOsobInfoRequest = Ais2WriteSupport.createNastavOsobInfoRequest(attributes, Integer.parseInt(uid.getUidValue()), login, uoc);
+                if (nastavOsobInfoRequest == null) {
+                    LOG.info("ENTRY: update() - nastavOsobInfo skipped, no write-side data");
+                } else {
+                    NastavOsobInfoResponse nastavOsobInfoResponse = nastavOsobInfoService.nastavOsobInfo(nastavOsobInfoRequest);
+                    ais.uk.resptypy.LZOsoba nastavResponse = nastavOsobInfoResponse.getOsoby().get(0);
+                    if (nastavResponse.getStatus().getAISFault().getCode() != 0) {
+                        throw new ConnectorException("Exception when updating nastavOsobInfo for: " + uid + ", code: "
+                                + nastavResponse.getStatus().getAISFault().getCode() + ", message: "
+                                + nastavResponse.getStatus().getAISFault().getMessage());
+                    }
+                }
+            }
             LOG.info("ENTRY: updated", osobaResponse.getId());
             return new Uid(""+osobaResponse.getId());
         }
