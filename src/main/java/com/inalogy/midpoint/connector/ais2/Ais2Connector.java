@@ -13,9 +13,10 @@ import ais.vratosoby.reqtypy.FilterType;
 import ais.vratosoby.typy.*;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
-import org.apache.cxf.feature.LoggingFeature;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.frontend.ClientProxyFactoryBean;
+import org.apache.cxf.interceptor.LoggingInInterceptor;
+import org.apache.cxf.interceptor.LoggingOutInterceptor;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
@@ -51,13 +52,16 @@ import javax.net.ssl.TrustManager;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Marshaller;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -1003,15 +1007,24 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         Path soapLogTargetPath = configuration.getSoapLogTargetPath();
         if (soapLogTargetPath != null) {
             try {
-                final Path targetForRequests  = soapLogTargetPath.resolve(REQUEST_LOG_FILENAME);
-                final Path targetForResponses = soapLogTargetPath.resolve(RESPONSE_LOG_FILENAME);
-                final URL targetPathURLForRequests  = targetForRequests.toUri().toURL();
-                final URL targetPathURLForResponses = targetForResponses.toUri().toURL();
-                factory.getFeatures().add(new LoggingFeature(targetPathURLForResponses.toString(),
-                        targetPathURLForRequests.toString(),
-                        100_000,
-                        true));
-            } catch (MalformedURLException ex) {
+                final PrintWriter requestWriter = new TimestampedPrintWriter(
+                        new FileOutputStream(soapLogTargetPath.resolve(REQUEST_LOG_FILENAME).toFile(), true));
+                final PrintWriter responseWriter = new TimestampedPrintWriter(
+                        new FileOutputStream(soapLogTargetPath.resolve(RESPONSE_LOG_FILENAME).toFile(), true));
+
+                LoggingOutInterceptor outInterceptor = new LoggingOutInterceptor();
+                outInterceptor.setPrettyLogging(true);
+                outInterceptor.setLimit(100_000);
+                outInterceptor.setPrintWriter(requestWriter);
+
+                LoggingInInterceptor inInterceptor = new LoggingInInterceptor();
+                inInterceptor.setPrettyLogging(true);
+                inInterceptor.setLimit(100_000);
+                inInterceptor.setPrintWriter(responseWriter);
+
+                factory.getOutInterceptors().add(outInterceptor);
+                factory.getInInterceptors().add(inInterceptor);
+            } catch (IOException ex) {
                 LOG.warn(ex, "Couldn't initialize logging of SOAP messages.");
             }
         }
@@ -1206,7 +1219,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         }
         ais.ulozzamestnanca.typy.LZIdentifKarta lzIdentifKarta = Ais2WriteSupport.createEmploymentIdentifKarta(attributes, uoc);
         ais.ulozzamestnanca.typy.LZOsoba.Zamestnanec zamestnanec = Ais2WriteSupport.createZamestnanec(attributes);
-        uoc = lzIdentifKarta.getCisloKarty();
+//        uoc = lzIdentifKarta.getCisloKarty();
 
         if (uid==null){
             throw new InvalidAttributeValueException("UID / AIS ID is mandatory in Update operation");
@@ -1306,6 +1319,23 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
                     osobaResponse.getStatus().getAISFault().getCode(), osobaResponse.getStatus().getAISFault().getMessage());
             throw new ConnectorException("Exception when updating account for: "+uid+", code: "
                     +osobaResponse.getStatus().getAISFault().getCode()+", message: "+osobaResponse.getStatus().getAISFault().getMessage());
+        }
+    }
+
+    private static class TimestampedPrintWriter extends PrintWriter {
+
+        private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+
+        TimestampedPrintWriter(FileOutputStream fos) {
+            super(fos, true);
+        }
+
+        @Override
+        public void println(String x) {
+            super.println("--- " + LocalDateTime.now().format(FORMATTER) + " ---");
+            super.println(x);
+            super.println();
+            super.flush();
         }
     }
 

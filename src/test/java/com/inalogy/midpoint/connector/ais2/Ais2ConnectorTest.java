@@ -227,7 +227,7 @@ public class Ais2ConnectorTest {
 		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
 		String uidValue = "1449310";
 		String login = "test1773055314577";
-		String uoc = "9039";
+		String uoc = null; //"490";
 
 		ResultsHandler rh = new ResultsHandler() {
 			@Override
@@ -239,7 +239,8 @@ public class Ais2ConnectorTest {
 
 		Set<Attribute> attributes = new HashSet<>();
 		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue(uoc).build());
+		if (uoc!=null)
+			attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue(uoc).build());
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue("test3").build());
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("UserV2").build());
 
@@ -256,14 +257,87 @@ public class Ais2ConnectorTest {
 				.addValue(String.join(delimiter, "2025-01-12", "2027-12-31", "27", "4", "101100", "JLF.Dek", "1.00", "0901000000"))
 				.addValue(String.join(delimiter, "2025-02-01", "", "27", "4", "10110451", "LF.Dek", "0.25", "0901000002"))
 				.build());
-		attributes.add(new AttributeBuilder().setName("LZIdentifKarta")
-				.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "2026-01-01", "", ""))
-				.addValue(String.join(delimiter, "490955", "PIK", "", "", "", "2025-01-01", "", ""))
-				.build());
+
+		AttributeBuilder lzIdentifKarta = new AttributeBuilder().setName("LZIdentifKarta");
+		if (uoc!=null){
+			lzIdentifKarta.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "2026-01-01", "", ""));
+		}
+		lzIdentifKarta.addValue(String.join(delimiter, "490959", "PIK", "", "", "", "2025-01-01", "", ""));
+		attributes.add(lzIdentifKarta.build());
+
 		attributes.add(new AttributeBuilder().setName("initPasswd").addValue("3899fda10b0a9b19ce3ceebc1924b175a1ebb000").build());
 		attributes.add(new AttributeBuilder().setName("liveID").addValue(login + ".live.id").build());
 		attributes.add(new AttributeBuilder().setName("email").addValue(login + "@example.com").build());
 		attributes.add(new AttributeBuilder().setName("emailPrivate").addValue(login + ".private@example.com").build());
 		attributes.add(new AttributeBuilder().setName("urlFotky").addValue("https://example.com/photo/" + login + ".jpg").build());
+	}
+
+	@Test
+	public void testAssignUoc2User() {
+		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
+		String uidValue = "1449320";
+		String login = "test15";
+		String uoc = "newUoc15";
+		// assign UOC to user who has no UOC
+
+		ResultsHandler rh = new ResultsHandler() {
+			@Override
+			public boolean handle(ConnectorObject connectorObject) {
+				System.out.println(connectorObject);
+				return true;
+			}
+		};
+
+		Set<Attribute> attributes = new HashSet<>();
+		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
+		if (uoc!=null)
+			attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue(uoc).build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue(login).build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("User").build());
+
+		addUocAttribute(attributes, uoc);
+
+		LOG.ok("start updating");
+		connector.update(objectClass, new Uid(uidValue), attributes, null);
+		LOG.ok("end updating");
+	}
+
+	private void addUocAttribute(Set<Attribute> attributes, String uoc) {
+		String delimiter = Ais2Connector.ATTRIBUTE_DELIMITER;
+		AttributeBuilder lzIdentifKarta = new AttributeBuilder().setName("LZIdentifKarta");
+		if (uoc!=null){
+			lzIdentifKarta.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "2026-01-01", "", ""));
+			attributes.add(lzIdentifKarta.build());
+		}
+	}
+
+	@Test
+	public void testUpdateUoc2User() {
+		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
+		String uidValue = "1449320";
+		String login = "test15";
+		String uoc = "neWerUoc15";
+		// fix UOC to user who has old UOC
+
+		ResultsHandler rh = new ResultsHandler() {
+			@Override
+			public boolean handle(ConnectorObject connectorObject) {
+				System.out.println(connectorObject);
+				return true;
+			}
+		};
+
+		Set<Attribute> attributes = new HashSet<>();
+		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
+		if (uoc!=null)
+			attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue(uoc).build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue(login).build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("User").build());
+
+		addUocAttribute(attributes, uoc);
+
+		LOG.ok("start updating");
+		connector.update(objectClass, new Uid(uidValue), attributes, null);
+		LOG.ok("end updating");
 	}
 }
