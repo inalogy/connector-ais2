@@ -53,6 +53,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Marshaller;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -125,6 +126,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
     private static final String ATTR_PB_OBEC = "pbObec";
     private static final String ATTR_PB_PSC = "pbPsc";
     private static final String ATTR_PB_STAT = "pbStat";
+    protected static final String ATTRIBUTE_DELIMITER = ";";
 
     private static final List<String> ATTRIBUTES_FOR_REMOVAL_VRAT_OSOBY = Arrays.asList(
             "/vratOsobyResponse/id",
@@ -745,16 +747,16 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
                 Document document = DOCUMENT_BUILDER_THREAD_LOCAL.get()
                         .parse(new InputSource((new StringReader(xmlDataString))));
                 addAttr(builder, ATTR_DATA, removeUnnecessaryAttributes(document, configuration.keepFullXml(), ATTRIBUTES_FOR_REMOVAL_VRAT_OSOBY));
-                if (configuration.enableUlozZamestnanca()) {
-                    Document doc = DOCUMENT_BUILDER_THREAD_LOCAL.get()
-                            .parse(new InputSource((new StringReader(xmlDataString))));
-                    addAttr(builder, ATTR_ULOZ_ZAMESTNANCA, removeUnnecessaryAttributes(doc, false, ATTRIBUTES_FOR_REMOVAL_ULOZ_ZAMESTNANCA));
-                }
-                if (configuration.enableNastavOsobInfo()) {
-                    Document doc = DOCUMENT_BUILDER_THREAD_LOCAL.get()
-                            .parse(new InputSource((new StringReader(xmlDataString))));
-                    addAttr(builder, ATTR_NASTAV_OSOB_INFO, removeUnnecessaryAttributes(doc, false, ATTRIBUTES_FOR_REMOVAL_NASTAV_OSOB_INFO));
-                }
+//                if (configuration.enableUlozZamestnanca()) {
+//                    Document doc = DOCUMENT_BUILDER_THREAD_LOCAL.get()
+//                            .parse(new InputSource((new StringReader(xmlDataString))));
+//                    addAttr(builder, ATTR_ULOZ_ZAMESTNANCA, removeUnnecessaryAttributes(doc, false, ATTRIBUTES_FOR_REMOVAL_ULOZ_ZAMESTNANCA));
+//                }
+//                if (configuration.enableNastavOsobInfo()) {
+//                    Document doc = DOCUMENT_BUILDER_THREAD_LOCAL.get()
+//                            .parse(new InputSource((new StringReader(xmlDataString))));
+//                    addAttr(builder, ATTR_NASTAV_OSOB_INFO, removeUnnecessaryAttributes(doc, false, ATTRIBUTES_FOR_REMOVAL_NASTAV_OSOB_INFO));
+//                }
             } catch (Exception e) {
                 throw new InvalidAttributeValueException("Unknown error while parsing xml file: " + e.getMessage(), e);
             }
@@ -762,7 +764,72 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
             // TODO throw more specific/better exception (?)
             throw new InvalidAttributeValueException("Error converting account to connector object: " + e.getMessage(), e);
         }
+
+        if (configuration.enableUlozZamestnanca()){
+            List<String> data = new ArrayList<>();
+            for (LZZamestnanec lzzam : osoba.getZamestnanec().getLZZamestnanec()){
+                data.add(String.join(ATTRIBUTE_DELIMITER,
+                        formatDate(lzzam.getOdDatumu()),
+                        formatDate(lzzam.getDoDatumu()),
+                        formatInt(lzzam.getKodKategoria()),
+                        ""+lzzam.getKodTypPPV(),
+                        formatString(lzzam.getOsobneCislo()),
+                        lzzam.getSkratkaOrganizacnaJednotka(),
+                        formatBigDecima(lzzam.getUvazok()),
+                        formatString(lzzam.getTelefon())));
+            }
+            addAttrs(builder, ATTR_ULOZ_ZAMESTNANCA, data);
+        }
+        if (configuration.enableNastavOsobInfo()){
+            List<String> data = new ArrayList<>();
+            for (LZIdentifKarta lzik : osoba.getIdentifKarta().getLZIdentifKarta()){
+                data.add(String.join(ATTRIBUTE_DELIMITER,
+                        lzik.getCisloKarty(),
+                        lzik.getKodTypIDCisla(),
+                        lzik.getKodValidacia(),
+                        lzik.getKodVizual(),
+                        formatDate(lzik.getPlatnostOd()),
+                        formatDate(lzik.getPlatnostDo()),
+                        lzik.getPrefix(),
+                        lzik.getSufix()));
+            }
+            addAttrs(builder, ATTR_NASTAV_OSOB_INFO, data);
+        }
+
         return builder.build();
+    }
+
+    private String formatDate(XMLGregorianCalendar input) {
+        if (input == null)
+            return "";
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return  sdf.format(input.toGregorianCalendar().getTime());
+    }
+
+    private String formatDate(JAXBElement<XMLGregorianCalendar> input) {
+        if (input == null || input.getValue() == null)
+            return "";
+
+        return formatDate(input.getValue());
+    }
+
+    private String formatInt(JAXBElement<Integer> input) {
+        if (input == null || input.getValue() == null)
+            return "";
+
+        return input.getValue().toString();
+    }
+
+    private String formatString(JAXBElement<String> input) {
+        if (input == null || input.getValue() == null)
+            return "";
+
+        return input.getValue();
+    }
+
+    private String formatBigDecima(BigDecimal input) {
+        return input != null ? input.toPlainString() : "";
     }
 
     private String getUoc(LZOsoba.IdentifKarta identifKarta) {
@@ -914,6 +981,12 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         }
     }
 
+    private void addAttrs(ConnectorObjectBuilder builder, String attributeName, List<String> data) {
+        if (data != null && !data.isEmpty()) {
+            builder.addAttribute(attributeName, data);
+        }
+    }
+
     private static void closeWsClient(Object service) {
         if (service != null) {
             Client client = ClientProxy.getClient(service);
@@ -1000,7 +1073,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         for (Attribute attr : attributes) {
             if (attr.getName().equals(name)) {
                 List<Object> values = attr.getValue();
-                if (values != null && !values.isEmpty()) {
+                if (values != null && !values.isEmpty() && values.get(0)!=null) {
                     String result = values.get(0).toString();
                     LOG.info("EXIT: getStringAttribute() - Found value for {0}: {1}", name, result);
                     return result;
@@ -1178,24 +1251,53 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         UlozZamestnancaRequest ulozZamestnancaRequest = new UlozZamestnancaRequest();
         ulozZamestnancaRequest.getOsoby().add(osoba);
 
+        // pri UPDATE je opacne poradie, najprv musime nastavOsobInfo vratane upratanie UOC, az potom moze ist ulozZnamestnanca
+        // inak povytvori duplicity
+        if (configuration.enableNastavOsobInfo()) {
+            NastavOsobInfoRequest nastavOsobInfoRequest = Ais2WriteSupport.createNastavOsobInfoRequest(attributes, Integer.parseInt(uid.getUidValue()), login, uoc);
+            if (nastavOsobInfoRequest == null) {
+                LOG.info("ENTRY: update() - nastavOsobInfo skipped, no write-side data");
+            } else {
+                NastavOsobInfoResponse nastavOsobInfoResponse = nastavOsobInfoService.nastavOsobInfo(nastavOsobInfoRequest);
+                ais.uk.resptypy.LZOsoba nastavResponse = nastavOsobInfoResponse.getOsoby().get(0);
+                if (nastavResponse.getStatus().getAISFault().getCode() == 1270200) {
+                    // UOČ nie je možné aktualizovať.
+                    LOG.warn("Exception when updating nastavOsobInfo for: " + uid.getUidValue() + ", code: "
+                            + nastavResponse.getStatus().getAISFault().getCode() + ", message: "
+                            + nastavResponse.getStatus().getAISFault().getMessage() + ", trying to fix it...");
+                    // fixing UOC
+                    NastavOsobInfoRequest vymazUocRequest = Ais2WriteSupport.createVymazUocRequest(Integer.parseInt(uid.getUidValue()));
+                    NastavOsobInfoResponse vymazUocResponse = nastavOsobInfoService.nastavOsobInfo(vymazUocRequest);
+                    ais.uk.resptypy.LZOsoba vymazResponse = vymazUocResponse.getOsoby().get(0);
+                    if (vymazResponse.getStatus().getAISFault().getCode() != 0) {
+                        throw new ConnectorException("Exception when fixing UOC over nastavOsobInfo for: " + uid.getUidValue() + ", code: "
+                                + vymazResponse.getStatus().getAISFault().getCode() + ", message: "
+                                + vymazResponse.getStatus().getAISFault().getMessage());
+
+                    } else {
+                        // run original request
+                        nastavOsobInfoResponse = nastavOsobInfoService.nastavOsobInfo(nastavOsobInfoRequest);
+                        nastavResponse = nastavOsobInfoResponse.getOsoby().get(0);
+                        if (nastavResponse.getStatus().getAISFault().getCode() != 0) {
+                            throw new ConnectorException("Exception when updating nastavOsobInfo after fixUOC for: " + uid.getUidValue() + ", code: "
+                                    + nastavResponse.getStatus().getAISFault().getCode() + ", message: "
+                                    + nastavResponse.getStatus().getAISFault().getMessage());
+                        }
+                    }
+                } else if (nastavResponse.getStatus().getAISFault().getCode() != 0) {
+                    throw new ConnectorException("Exception when updating nastavOsobInfo for: " + uid.getUidValue() + ", code: "
+                            + nastavResponse.getStatus().getAISFault().getCode() + ", message: "
+                            + nastavResponse.getStatus().getAISFault().getMessage());
+                }
+            }
+        }
+
+        // pri update, najprv treba opravit UOC, az potom pridavat zamestnancov, inak vytvori novu a novu osobu dookola
         UlozZamestnancaResponse ulozZamestnancaResponse = ulozZamestnancaService.ulozZamestnanca(ulozZamestnancaRequest);
         ais.uk.resptypy.LZOsoba osobaResponse = ulozZamestnancaResponse.getOsoby().get(0);
 
         if (osobaResponse.getStatus().getAISFault().getCode()==0) {
-            if (configuration.enableNastavOsobInfo()) {
-                NastavOsobInfoRequest nastavOsobInfoRequest = Ais2WriteSupport.createNastavOsobInfoRequest(attributes, Integer.parseInt(uid.getUidValue()), login, uoc);
-                if (nastavOsobInfoRequest == null) {
-                    LOG.info("ENTRY: update() - nastavOsobInfo skipped, no write-side data");
-                } else {
-                    NastavOsobInfoResponse nastavOsobInfoResponse = nastavOsobInfoService.nastavOsobInfo(nastavOsobInfoRequest);
-                    ais.uk.resptypy.LZOsoba nastavResponse = nastavOsobInfoResponse.getOsoby().get(0);
-                    if (nastavResponse.getStatus().getAISFault().getCode() != 0) {
-                        throw new ConnectorException("Exception when updating nastavOsobInfo for: " + uid + ", code: "
-                                + nastavResponse.getStatus().getAISFault().getCode() + ", message: "
-                                + nastavResponse.getStatus().getAISFault().getMessage());
-                    }
-                }
-            }
+
             LOG.info("ENTRY: updated", osobaResponse.getId());
             return new Uid(""+osobaResponse.getId());
         }

@@ -1,6 +1,7 @@
 package com.inalogy.midpoint.connector.ais2;
 
 import ais.nastavosobinfo.NastavOsobInfoRequest;
+import ais.nastavosobinfo.typy.LZIdentifKarta;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -232,6 +233,25 @@ final class Ais2WriteSupport {
             }
             osoba.setIdentifKartaTyp(identifKartaTyp);
         }
+
+        request.getOsoby().add(osoba);
+        return request;
+    }
+
+    static NastavOsobInfoRequest createVymazUocRequest(int id) {
+
+        NastavOsobInfoRequest request = new NastavOsobInfoRequest();
+        ais.nastavosobinfo.typy.LZOsoba osoba = new ais.nastavosobinfo.typy.LZOsoba();
+        osoba.setId(id);
+
+        ais.nastavosobinfo.typy.LZOsoba.IdentifKartaTyp identifKartaTyp = new ais.nastavosobinfo.typy.LZOsoba.IdentifKartaTyp();
+        List<String> cardTypes = Arrays.asList("UOC", "PIK");
+        for (String cardTypeValue : cardTypes) {
+            ais.nastavosobinfo.typy.LZIdentifKartaTyp cardType = new ais.nastavosobinfo.typy.LZIdentifKartaTyp();
+            cardType.setTypCislaKarty(cardTypeValue);
+            identifKartaTyp.getLZIdentifKartaTyp().add(cardType);
+        }
+        osoba.setIdentifKartaTyp(identifKartaTyp);
 
         request.getOsoby().add(osoba);
         return request;

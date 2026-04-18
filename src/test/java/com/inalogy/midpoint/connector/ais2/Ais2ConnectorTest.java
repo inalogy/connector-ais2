@@ -23,7 +23,6 @@ import static org.testng.Assert.fail;
 public class Ais2ConnectorTest {
 
 	private static final Log LOG = Log.getLog(Ais2ConnectorTest.class);
-	private static final String ATTRIBUTE_DELIMITER = ";";
 
 	private Ais2Configuration configuration;
 
@@ -125,12 +124,14 @@ public class Ais2ConnectorTest {
 		ResultsHandler rh = new ResultsHandler() {
 			@Override
 			public boolean handle(ConnectorObject connectorObject) {
+				LOG.ok("returned: {0}", connectorObject);
 				return true;
 			}
 		};
 
 		Ais2Filter sf = new Ais2Filter();
-		sf.byId = "1441085"; //""1023736"; //GP
+//		sf.byId = "1441085"; //""1023736"; //GP
+		sf.byId = "1449310";
 
 		LOG.ok("start finding");
 		connector.executeQuery(objectClass, sf, rh, null);
@@ -197,7 +198,8 @@ public class Ais2ConnectorTest {
 	@Test
 	public void testCreateUser() {
 		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
-		String login = "test15";
+		String login = "test14";
+		String uoc = "11111";
 
 		ResultsHandler rh = new ResultsHandler() {
 			@Override
@@ -209,10 +211,11 @@ public class Ais2ConnectorTest {
 
 		Set<Attribute> attributes = new HashSet<>();
 		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue("10000").build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue("test").build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue(uoc).build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue(login).build());
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("user").build());
-		addWriteAttributes(attributes, "10000", login);
+
+		addWriteAttributes(attributes, uoc, login);
 
 		LOG.ok("start creating");
 		connector.create(objectClass, attributes, null);
@@ -222,8 +225,9 @@ public class Ais2ConnectorTest {
 	@Test
 	public void testUpdateUser() {
 		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
-		String uidValue = "1441091";
+		String uidValue = "1449310";
 		String login = "test1773055314577";
+		String uoc = "9039";
 
 		ResultsHandler rh = new ResultsHandler() {
 			@Override
@@ -235,10 +239,11 @@ public class Ais2ConnectorTest {
 
 		Set<Attribute> attributes = new HashSet<>();
 		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue("9999").build());
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue(uoc).build());
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue("test3").build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("User").build());
-		addWriteAttributes(attributes, "9999", login);
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("UserV2").build());
+
+		addWriteAttributes(attributes, uoc, login);
 
 		LOG.ok("start updating");
 		connector.update(objectClass, new Uid(uidValue), attributes, null);
@@ -246,14 +251,14 @@ public class Ais2ConnectorTest {
 	}
 
 	private void addWriteAttributes(Set<Attribute> attributes, String uoc, String login) {
-		String delimiter = ATTRIBUTE_DELIMITER;
+		String delimiter = Ais2Connector.ATTRIBUTE_DELIMITER;
 		attributes.add(new AttributeBuilder().setName("LZZamestnanec")
-				.addValue(String.join(delimiter, "2026-01-12", "", "27", "4", "10110450", "LF.Dek", "0.50", "0901000001"))
-				.addValue(String.join(delimiter, "2026-02-01", "", "27", "4", "10110451", "LF.Dek", "0.25", "0901000002"))
+				.addValue(String.join(delimiter, "2025-01-12", "2027-12-31", "27", "4", "101100", "JLF.Dek", "1.00", "0901000000"))
+				.addValue(String.join(delimiter, "2025-02-01", "", "27", "4", "10110451", "LF.Dek", "0.25", "0901000002"))
 				.build());
 		attributes.add(new AttributeBuilder().setName("LZIdentifKarta")
 				.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "2026-01-01", "", ""))
-				.addValue(String.join(delimiter, "49095043", "PIK", "", "", "", "2026-01-01", "", ""))
+				.addValue(String.join(delimiter, "490955", "PIK", "", "", "", "2025-01-01", "", ""))
 				.build());
 		attributes.add(new AttributeBuilder().setName("initPasswd").addValue("3899fda10b0a9b19ce3ceebc1924b175a1ebb000").build());
 		attributes.add(new AttributeBuilder().setName("liveID").addValue(login + ".live.id").build());
