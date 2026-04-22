@@ -10,7 +10,7 @@ public class Ais2Filter {
     public String toString() {
         return "Ais2Filter {" +
                 "byId= " + byId +
-                "byInterval= " + byInterval +
+                ", byInterval= " + byInterval +
                 "}";
     }
 

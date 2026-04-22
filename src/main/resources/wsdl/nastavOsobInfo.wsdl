@@ -100,7 +100,7 @@
                             <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Správa o spracovaní/nespracovaní dát pre osobu</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="liveID" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element minOccurs="0" name="liveID" nillable="true" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
                         <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
                             <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Identifikátor pre Micosoft</xsd:documentation>
                         </xsd:annotation>

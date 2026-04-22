@@ -253,12 +253,12 @@ public class Ais2ConnectorTest {
 
 	private void addWriteAttributes(Set<Attribute> attributes, String uoc, String login) {
 		String delimiter = Ais2Connector.ATTRIBUTE_DELIMITER;
-		attributes.add(new AttributeBuilder().setName("LZZamestnanec")
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_ULOZ_ZAMESTNANCA)
 				.addValue(String.join(delimiter, "2025-01-12", "2027-12-31", "27", "4", "101100", "JLF.Dek", "1.00", "0901000000"))
 				.addValue(String.join(delimiter, "2025-02-01", "", "27", "4", "10110451", "LF.Dek", "0.25", "0901000002"))
 				.build());
 
-		AttributeBuilder lzIdentifKarta = new AttributeBuilder().setName("LZIdentifKarta");
+		AttributeBuilder lzIdentifKarta = new AttributeBuilder().setName(Ais2Connector.ATTR_NASTAV_OSOB_INFO);
 		if (uoc!=null){
 			lzIdentifKarta.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "2026-01-01", "", ""));
 		}
@@ -304,9 +304,10 @@ public class Ais2ConnectorTest {
 
 	private void addUocAttribute(Set<Attribute> attributes, String uoc) {
 		String delimiter = Ais2Connector.ATTRIBUTE_DELIMITER;
-		AttributeBuilder lzIdentifKarta = new AttributeBuilder().setName("LZIdentifKarta");
+		AttributeBuilder lzIdentifKarta = new AttributeBuilder().setName(Ais2Connector.ATTR_NASTAV_OSOB_INFO);
 		if (uoc!=null){
-			lzIdentifKarta.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "2026-01-01", "", ""));
+			lzIdentifKarta.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "", "", ""));
+//			lzIdentifKarta.addValue(String.join(delimiter, uoc, "UOC", "", "", "", "2026-01-01", "", ""));
 			attributes.add(lzIdentifKarta.build());
 		}
 	}
@@ -316,7 +317,7 @@ public class Ais2ConnectorTest {
 		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
 		String uidValue = "1449320";
 		String login = "test15";
-		String uoc = "neWerUoc15";
+		String uoc = "newerUoc15";
 		// fix UOC to user who has old UOC
 
 		ResultsHandler rh = new ResultsHandler() {
@@ -328,13 +329,54 @@ public class Ais2ConnectorTest {
 		};
 
 		Set<Attribute> attributes = new HashSet<>();
-		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
-		if (uoc!=null)
-			attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue(uoc).build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue(login).build());
-		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("User").build());
+//		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
+//		if (uoc!=null)
+//			attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_UOC).addValue(uoc).build());
+//		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_MENO).addValue(login).build());
+//		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_PRIEZVISKO).addValue("User").build());
 
 		addUocAttribute(attributes, uoc);
+
+		LOG.ok("start updating");
+		connector.update(objectClass, new Uid(uidValue), attributes, null);
+		LOG.ok("end updating");
+	}
+
+	@Test
+	public void testCreateUocOverUpdateUser() {
+		// updateOp and set first time UOC
+		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
+
+		// TRACE (org.identityconnectors.framework.api.operations.UpdateApiOp): method: addAttributeValues msg:instance='AIS2 zamestnanec' Enter: addAttributeValues(Object
+		//Class: osoba, Attribute: {Name=__UID__, Value=[2128], NameHint=Attribute: {Name=__NAME__, Value=[tomas.csank]}},
+		// [Attribute: {Name=ulozZamestnanca, Value=[2011-10-01;;67;1;1593;KaMBaI;1.00;]},
+		// Attribute: {Name=nastavOsobInfo, Value=[1593;UOC;;;;;;]}], OperationOptions: {})
+
+		// received in connector
+		// [Attribute: {Name=ulozZamestnanca, Value=[2011-10-01;2020-08-31;;1;1593;ÚMBaGB;1.00;, 2020-09-01;2022-08-31;;1;1593;KaMBaI;1.00;, 2022-09-01;;;1;1593;KaMBaI;1.00;, 2011-10-01;;67;1;1593;KaMBaI;1.00;]}, Attribute: {Name=nastavOsobInfo, Value=[1593;UOC;;;;;;]}]
+
+		String uidValue = "1422398"; // ""2128";
+		String login = "test0";
+
+		ResultsHandler rh = new ResultsHandler() {
+			@Override
+			public boolean handle(ConnectorObject connectorObject) {
+				System.out.println(connectorObject);
+				return true;
+			}
+		};
+
+		Set<Attribute> attributes = new HashSet<>();
+		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
+
+		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_ULOZ_ZAMESTNANCA)
+				.addValue("2011-10-01;;67;1;1593;KaMBaI;1.00;")
+//				.addValue("2011-10-01;;67;1;1593;UK;1.00;")
+				.build());
+
+//		AttributeBuilder lzIdentifKarta = new AttributeBuilder().setName(Ais2Connector.ATTR_NASTAV_OSOB_INFO);
+//		lzIdentifKarta.addValue("1593;UOC;;;;;;");
+//		attributes.add(lzIdentifKarta.build());
 
 		LOG.ok("start updating");
 		connector.update(objectClass, new Uid(uidValue), attributes, null);

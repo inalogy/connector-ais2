@@ -87,9 +87,9 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
 
     private static final String ATTR_DATA = "data";
 
-    private static final String ATTR_ULOZ_ZAMESTNANCA = "ulozZamestnanca";
+    protected static final String ATTR_ULOZ_ZAMESTNANCA = "ulozZamestnanca";
 
-    private static final String ATTR_NASTAV_OSOB_INFO = "nastavOsobInfo";
+    protected static final String ATTR_NASTAV_OSOB_INFO = "nastavOsobInfo";
 
     private static final String ATTR_MOST_RECENT_ACADEMIC_YEAR = "mostRecentAcademicYear";
 
@@ -359,10 +359,12 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
 
         objClassBuilder.addAttributeInfo(
                 new AttributeInfoBuilder(ATTR_LOGIN)
+                        .setUpdateable(true)
                         .build());
 
         objClassBuilder.addAttributeInfo(
                 new AttributeInfoBuilder(ATTR_UOC)
+                        .setUpdateable(true)
                         .build());
 
         objClassBuilder.addAttributeInfo(
@@ -564,11 +566,13 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         objClassBuilder.addAttributeInfo(
                 new AttributeInfoBuilder(ATTR_ULOZ_ZAMESTNANCA)
                         .setUpdateable(true)
+                        .setMultiValued(true)
                         .build());
 
         objClassBuilder.addAttributeInfo(
                 new AttributeInfoBuilder(ATTR_NASTAV_OSOB_INFO)
                         .setUpdateable(true)
+                        .setMultiValued(true)
                         .build());
 
         schemaBuilder.defineOperationOption(OperationOptionInfoBuilder.buildPageSize(), SearchOp.class);
@@ -1179,7 +1183,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         ais.uk.resptypy.LZOsoba osobaResponse = ulozZamestnancaResponse.getOsoby().get(0);
         if (osobaResponse.getStatus().getAISFault().getCode()==0) {
             if (configuration.enableNastavOsobInfo()) {
-                NastavOsobInfoRequest nastavOsobInfoRequest = Ais2WriteSupport.createNastavOsobInfoRequest(attributes, osobaResponse.getId(), login, uoc);
+                NastavOsobInfoRequest nastavOsobInfoRequest = Ais2WriteSupport.createNastavOsobInfoRequest(attributes, osobaResponse.getId(), login, uoc, null);
                 if (nastavOsobInfoRequest == null) {
                     LOG.info("ENTRY: create() - nastavOsobInfo skipped, no write-side data");
                 } else {
@@ -1207,36 +1211,44 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
     public Uid update(ObjectClass objectClass, Uid uid, Set<Attribute> attributes, OperationOptions options) {
         LOG.info("ENTRY: update() - Input objectClass: {0}, uid: {1}, attributes count: {2}, options: {3}",
                 objectClass, uid, attributes != null ? attributes.size() : 0, options);
+        LOG.info("All Attributes: {0}", attributes);
 
         String login = getStringAttribute(attributes, Name.NAME);
-        String uoc = getStringAttribute(attributes, ATTR_UOC);
+        String uoc = getStringAttribute(attributes, ATTR_UOC); // tuna UOC neposle MP :/
         String pohlavie = getStringAttribute(attributes, ATTR_KOD_POHLAVIE);
-        if (isEmpty(pohlavie))
-            pohlavie = "N"; // Nedefinovane, ciselnikovy atribut, povinny
+//        if (isEmpty(pohlavie))
+//            pohlavie = "N"; // Nedefinovane, ciselnikovy atribut, povinny
 
         if (!configuration.enableUlozZamestnanca()) {
             throw new ConnectorException("Update operation requires enableUlozZamestnanca=true");
         }
         ais.ulozzamestnanca.typy.LZIdentifKarta lzIdentifKarta = Ais2WriteSupport.createEmploymentIdentifKarta(attributes, uoc);
         ais.ulozzamestnanca.typy.LZOsoba.Zamestnanec zamestnanec = Ais2WriteSupport.createZamestnanec(attributes);
-//        uoc = lzIdentifKarta.getCisloKarty();
-
+        LOG.info("UOC from lzIdentifKarta {0}", lzIdentifKarta.getCisloKarty());
+        uoc = lzIdentifKarta.getCisloKarty();
+        String povodnyLogin = null;
         if (uid==null){
             throw new InvalidAttributeValueException("UID / AIS ID is mandatory in Update operation");
         }
 
         if (isEmpty(uoc)){
+            LOG.info("UOC as update input: {0}", uoc);
             Integer uidValue = Integer.valueOf(uid.getUidValue());
             VratOsobyRequest vratOsobyRequest = createVratOsobyRequest(uidValue, uidValue);
 
             VratOsobyResponse vratOsobyResponse = vratOsobyService.vratOsoby(vratOsobyRequest);
             uoc = getUoc(vratOsobyResponse.getOsoby().get(0).getIdentifKarta());
-            LOG.warn("UOC is empty also over vratOsoby");
-            if (isEmpty(uoc))
+            if (vratOsobyResponse.getOsoby().get(0).getPouzivatel()!=null){
+                povodnyLogin = vratOsobyResponse.getOsoby().get(0).getPouzivatel().getLogin();
+            }
+            if (isEmpty(uoc)) {
+                LOG.warn("UOC is empty also over vratOsoby");
                 throw new InvalidAttributeValueException("UOC is mandatory in Update operation");
+            } else {
+                LOG.warn("Setting up UOC from vratOsoby {0} for {1}", uoc, uid);
+                lzIdentifKarta.setCisloKarty(uoc);
+            }
         }
-
-        lzIdentifKarta.setCisloKarty(uoc);
 
         ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta identifKarta = new ais.ulozzamestnanca.typy.LZOsoba.IdentifKarta();
         identifKarta.setLZIdentifKarta(lzIdentifKarta);
@@ -1267,7 +1279,7 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
         // pri UPDATE je opacne poradie, najprv musime nastavOsobInfo vratane upratanie UOC, az potom moze ist ulozZnamestnanca
         // inak povytvori duplicity
         if (configuration.enableNastavOsobInfo()) {
-            NastavOsobInfoRequest nastavOsobInfoRequest = Ais2WriteSupport.createNastavOsobInfoRequest(attributes, Integer.parseInt(uid.getUidValue()), login, uoc);
+            NastavOsobInfoRequest nastavOsobInfoRequest = Ais2WriteSupport.createNastavOsobInfoRequest(attributes, Integer.parseInt(uid.getUidValue()), login, uoc, povodnyLogin);
             if (nastavOsobInfoRequest == null) {
                 LOG.info("ENTRY: update() - nastavOsobInfo skipped, no write-side data");
             } else {

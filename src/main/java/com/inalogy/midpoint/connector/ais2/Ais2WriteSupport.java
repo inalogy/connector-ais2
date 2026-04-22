@@ -3,6 +3,7 @@ package com.inalogy.midpoint.connector.ais2;
 import ais.nastavosobinfo.NastavOsobInfoRequest;
 import ais.nastavosobinfo.typy.LZIdentifKarta;
 import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException;
 import org.identityconnectors.framework.common.objects.Attribute;
 
@@ -26,6 +27,7 @@ final class Ais2WriteSupport {
     static final String ULOZ_NAMESPACE = "http://ais/ulozZamestnanca/typy";
     static final String NASTAV_NAMESPACE = "http://ais/nastavOsobInfo/typy";
     static final String ATTRIBUTE_DELIMITER = ";";
+    private static final Log LOG = Log.getLog(Ais2WriteSupport.class);
 
     private static final String[] EMPLOYMENT_FIELDS = {
             "odDatumu",
@@ -81,7 +83,7 @@ final class Ais2WriteSupport {
         String prefix = null;
         String sufix = null;
 
-        for (String rawValue : getAttributeValues(attributes, "LZIdentifKarta")) {
+        for (String rawValue : getAttributeValues(attributes, Ais2Connector.ATTR_NASTAV_OSOB_INFO)) {
             if (isXmlPayload(rawValue)) {
                 continue;
             }
@@ -113,7 +115,7 @@ final class Ais2WriteSupport {
     static ais.ulozzamestnanca.typy.LZOsoba.Zamestnanec createZamestnanec(Set<Attribute> attributes) {
         List<ais.ulozzamestnanca.typy.LZZamestnanec> relations = new ArrayList<>();
 
-        for (String rawValue : getAttributeValues(attributes, "ulozZamestnanca", "LZZamestnanec")) {
+        for (String rawValue : getAttributeValues(attributes, Ais2Connector.ATTR_ULOZ_ZAMESTNANCA, "LZZamestnanec")) {
             if (isXmlPayload(rawValue)) {
                 continue;
             }
@@ -156,12 +158,13 @@ final class Ais2WriteSupport {
         return zamestnanec;
     }
 
-    static NastavOsobInfoRequest createNastavOsobInfoRequest(Set<Attribute> attributes, int id, String login, String uoc) {
+    static NastavOsobInfoRequest createNastavOsobInfoRequest(Set<Attribute> attributes, int id, String login, String uoc, String povodnyLogin) {
         List<ais.nastavosobinfo.typy.LZIdentifKarta> cards = new ArrayList<>();
         Set<String> cardTypes = new LinkedHashSet<>();
-        String today = LocalDate.now().toString();
+        String today = null; //LocalDate.now().toString();
+        boolean cardTypesUpdate = false;
 
-        for (String rawValue : getAttributeValues(attributes, "nastavOsobInfo", "LZIdentifKarta")) {
+        for (String rawValue : getAttributeValues(attributes, Ais2Connector.ATTR_NASTAV_OSOB_INFO, "LZIdentifKarta")) {
             if (isXmlPayload(rawValue)) {
                 continue;
             }
@@ -175,6 +178,7 @@ final class Ais2WriteSupport {
 
             cards.add(createNastavCard(values, today));
             cardTypes.add(kodTypIdCisla);
+            cardTypesUpdate = true;
         }
 
         if (!StringUtil.isBlank(uoc) && !cardTypes.contains("UOC")) {
@@ -197,14 +201,17 @@ final class Ais2WriteSupport {
         List<String> urlFotkyValues = getAttributeValues(attributes, "urlFotky");
         String urlFotky = urlFotkyValues.isEmpty() ? null : urlFotkyValues.get(0);
 
-        if (cards.isEmpty()
-                && StringUtil.isBlank(login)
+        if (!cardTypesUpdate
+                && (StringUtil.isBlank(login) || login.equals(povodnyLogin))
                 && StringUtil.isBlank(initPasswd)
                 && StringUtil.isBlank(email)
                 && StringUtil.isBlank(emailPrivate)
                 && StringUtil.isBlank(liveId)
                 && StringUtil.isBlank(urlFotky)) {
-            return null;
+            if (!StringUtil.isBlank(login)) {
+                LOG.warn("login je neprazdne, ale ignorujeme update {0} pre {1}, povodnyLogin {2}", login, id, povodnyLogin); //FIXME ako toto nahradit
+            }
+            return null; // netreba update, niet co zmenit
         }
 
         NastavOsobInfoRequest request = new NastavOsobInfoRequest();
@@ -214,9 +221,15 @@ final class Ais2WriteSupport {
         ais.nastavosobinfo.typy.SPPouzivatel pouzivatel = new ais.nastavosobinfo.typy.SPPouzivatel();
         pouzivatel.setLogin(login == null ? "" : login);
         pouzivatel.setInitPasswd(initPasswd == null ? "" : initPasswd);
-        osoba.setPouzivatel(pouzivatel);
-        osoba.setLiveID(liveId == null ? "" : liveId);
-        osoba.setUrlFotky(urlFotky == null ? "" : urlFotky);
+        if (login!=null || initPasswd!=null) {
+            // nastavujeme len ked je tam nieco neprazdne
+            osoba.setPouzivatel(pouzivatel);
+        }
+        //osoba.setLiveID(liveId == null ? "" : liveId);
+        osoba.setLiveID(createElement(NASTAV_NAMESPACE, "liveId", String.class, liveId));
+        if (urlFotky != null) {
+            osoba.setUrlFotky(urlFotky == null ? "" : urlFotky);
+        }
         osoba.setEmail(createElement(NASTAV_NAMESPACE, "email", String.class, email));
         osoba.setEmailPrivate(createElement(NASTAV_NAMESPACE, "emailPrivate", String.class, emailPrivate));
 
