@@ -71,7 +71,7 @@ import static java.util.Optional.ofNullable;
  * AIS2 Connector.
  */
 @ConnectorClass(displayNameKey = "ais2.connector.display", configurationClass = Ais2Configuration.class)
-public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, SearchOp<Ais2Filter>, CreateOp, UpdateOp {
+public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, SearchOp<Ais2Filter>, CreateOp, UpdateOp, UpdateDeltaOp {
 
     private static final Log LOG = Log.getLog(Ais2Connector.class);
 
@@ -1332,6 +1332,51 @@ public class Ais2Connector implements PoolableConnector, TestOp, SchemaOp, Searc
             throw new ConnectorException("Exception when updating account for: "+uid+", code: "
                     +osobaResponse.getStatus().getAISFault().getCode()+", message: "+osobaResponse.getStatus().getAISFault().getMessage());
         }
+    }
+
+    @Override
+    public Set<AttributeDelta> updateDelta(ObjectClass objectClass, Uid uid, Set<AttributeDelta> modifications, OperationOptions options) {
+        LOG.info("ENTRY: updateDelta() - objectClass: {0}, uid: {1}, modifications count: {2}, options: {3}",
+                objectClass, uid, modifications != null ? modifications.size() : 0, options);
+
+        if (modifications == null || modifications.isEmpty()) {
+            LOG.info("updateDelta(): no modifications, skipping");
+            return Collections.emptySet();
+        }
+
+        // Convert AttributeDelta set -> Attribute set, then delegate to update().
+        // The AIS2 SOAP API does full-record updates (ulozZamestnanca/nastavOsobInfo),
+        // so per-value add/remove is converted to a replace-style attribute list.
+        Set<Attribute> attributes = new HashSet<>();
+        for (AttributeDelta delta : modifications) {
+            String attrName = delta.getName();
+            List<Object> valuesToReplace = delta.getValuesToReplace();
+
+            if (valuesToReplace != null) {
+                // Single-valued replace, or explicit full replace of multi-valued
+                attributes.add(AttributeBuilder.build(attrName, valuesToReplace));
+                LOG.ok("updateDelta(): {0} REPLACE with {1} value(s)", attrName, valuesToReplace.size());
+            } else {
+                // add/remove semantics - AIS2 does full replace, so we combine add values
+                // and warn that remove-only cannot be honored without fetching current state
+                List<Object> combined = new ArrayList<>();
+                if (delta.getValuesToAdd() != null) {
+                    combined.addAll(delta.getValuesToAdd());
+                }
+                if (delta.getValuesToRemove() != null && !delta.getValuesToRemove().isEmpty()) {
+                    LOG.warn("updateDelta(): attribute {0} has valuesToRemove={1}, but AIS2 does full-record replace; only valuesToAdd are applied",
+                            attrName, delta.getValuesToRemove());
+                }
+                attributes.add(AttributeBuilder.build(attrName, combined));
+                LOG.ok("updateDelta(): {0} ADD with {1} value(s)", attrName, combined.size());
+            }
+        }
+
+        // Delegate to the existing full-replace update() implementation
+        update(objectClass, uid, attributes, options);
+
+        // No side-effect deltas to report back
+        return Collections.emptySet();
     }
 
     private static class TimestampedPrintWriter extends PrintWriter {

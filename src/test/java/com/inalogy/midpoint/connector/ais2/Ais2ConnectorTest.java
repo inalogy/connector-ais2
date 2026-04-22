@@ -174,6 +174,8 @@ public class Ais2ConnectorTest {
 
 		Ais2Filter sf = new Ais2Filter();
 		sf.byInterval = new Interval(1023736, 1023800); //GP
+//		sf.byInterval = new Interval(1422398, 1422398); //test
+
 
 		LOG.ok("start finding");
 		connector.executeQuery(objectClass, sf, rh, null);
@@ -370,8 +372,9 @@ public class Ais2ConnectorTest {
 		attributes.add(new AttributeBuilder().setName(Name.NAME).addValue(login).build());
 
 		attributes.add(new AttributeBuilder().setName(Ais2Connector.ATTR_ULOZ_ZAMESTNANCA)
-				.addValue("2011-10-01;;67;1;1593;KaMBaI;1.00;")
+//				.addValue("2011-10-01;;67;1;1593;KaMBaI;1.00;")
 //				.addValue("2011-10-01;;67;1;1593;UK;1.00;")
+				.addValue("2021-10-01;;67;1;15930;FMFI;1.00;")
 				.build());
 
 //		AttributeBuilder lzIdentifKarta = new AttributeBuilder().setName(Ais2Connector.ATTR_NASTAV_OSOB_INFO);
@@ -381,5 +384,32 @@ public class Ais2ConnectorTest {
 		LOG.ok("start updating");
 		connector.update(objectClass, new Uid(uidValue), attributes, null);
 		LOG.ok("end updating");
+	}
+
+	@Test
+	public void testCreateUocOverUpdateDeltaUser() {
+		// updateDeltaOp and set first time UOC - delta-style version of testCreateUocOverUpdateUser
+		ObjectClass objectClass = new ObjectClass(Ais2Connector.OBJECT_CLASS_OSOBA);
+
+		String uidValue = "1422398"; // ""2128";
+		String login = "test0";
+
+		Set<AttributeDelta> modifications = new HashSet<>();
+		modifications.add(AttributeDeltaBuilder.build(Name.NAME, login));
+
+		modifications.add(new AttributeDeltaBuilder()
+				.setName(Ais2Connector.ATTR_ULOZ_ZAMESTNANCA)
+//				.addValueToAdd("2021-10-01;;67;1;15930;FMFI;1.00;")
+				.addValueToAdd("2011-10-01;;67;1;1593;UK;1.00;")
+				.build());
+
+//		modifications.add(new AttributeDeltaBuilder()
+//				.setName(Ais2Connector.ATTR_NASTAV_OSOB_INFO)
+//				.addValueToReplace("1593;UOC;;;;;;")
+//				.build());
+
+		LOG.ok("start updating via delta");
+		Set<AttributeDelta> sideEffects = connector.updateDelta(objectClass, new Uid(uidValue), modifications, null);
+		LOG.ok("end updating via delta, sideEffects: {0}", sideEffects);
 	}
 }
